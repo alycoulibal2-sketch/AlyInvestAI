@@ -21,7 +21,8 @@ export async function getLatestAnalysis() {
 
 export async function currentPortfolioView(marketSnapshot) {
   const state = await portfolioLib.load();
-  return portfolioLib.withLivePrices(state, marketSnapshot);
+  const priced = state._live ? state : portfolioLib.applyDemoMarketPrices(state, marketSnapshot);
+  return portfolioLib.computeView(priced);
 }
 
 export async function runDailyAnalysis({ manual = false } = {}) {

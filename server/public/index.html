@@ -509,6 +509,18 @@ input,textarea{font-family:inherit}
 .b-csv svg,.b-manual svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
 .broker-name{font-size:14px;font-weight:600;color:var(--text)}
 .broker-sub{font-size:11px;color:var(--muted)}
+.broker-opt-disabled{opacity:.45;cursor:default}
+
+.broker-form{margin-top:2px;margin-bottom:8px;display:flex;flex-direction:column;gap:10px}
+.broker-form-note{font-size:12px;color:var(--muted);line-height:1.5}
+.field-error{font-size:12px;color:var(--red);margin-top:-4px}
+.manual-row{display:grid;grid-template-columns:1.3fr 0.8fr 0.8fr auto;gap:6px;align-items:center}
+.manual-row input{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 10px;font-size:13px;color:var(--text);outline:none;width:100%}
+.manual-row input:focus{border-color:rgba(199,168,103,.35)}
+.manual-row-remove{width:28px;height:28px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border2);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:13px}
+.csv-file-label{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;border:1px dashed var(--border2);border-radius:var(--r);font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center}
+.csv-file-label:hover{border-color:rgba(199,168,103,.35);color:var(--text)}
+.csv-file-label input{display:none}
 
 /* ── ANIMATIONS ── */
 @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -590,15 +602,11 @@ input,textarea{font-family:inherit}
         <div class="broker-list">
           <button class="broker-opt" onclick="App.pickBroker(this,'t212')">
             <div class="broker-ico b-212">212</div>
-            <div><div class="broker-name">Trading 212</div><div class="broker-sub">Connect via secure OAuth</div></div>
+            <div><div class="broker-name">Trading 212</div><div class="broker-sub">Live read-only API — real holdings</div></div>
           </button>
           <button class="broker-opt" onclick="App.pickBroker(this,'ibkr')">
             <div class="broker-ico b-ibkr">IB</div>
-            <div><div class="broker-name">Interactive Brokers</div><div class="broker-sub">Connect via secure OAuth</div></div>
-          </button>
-          <button class="broker-opt" onclick="App.pickBroker(this,'rh')">
-            <div class="broker-ico b-rh">RH</div>
-            <div><div class="broker-name">Robinhood</div><div class="broker-sub">Connect via secure OAuth</div></div>
+            <div><div class="broker-name">Interactive Brokers</div><div class="broker-sub">Via a bridge you run yourself</div></div>
           </button>
           <button class="broker-opt" onclick="App.pickBroker(this,'csv')">
             <div class="broker-ico b-csv"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
@@ -608,9 +616,13 @@ input,textarea{font-family:inherit}
             <div class="broker-ico b-manual"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
             <div><div class="broker-name">Manual Entry</div><div class="broker-sub">Enter holdings manually</div></div>
           </button>
+          <div class="broker-opt broker-opt-disabled">
+            <div class="broker-ico b-rh">RH</div>
+            <div><div class="broker-name">Robinhood</div><div class="broker-sub">No official API — use CSV export instead</div></div>
+          </div>
         </div>
-        <button class="flow-btn" id="connect-btn" style="opacity:.38;pointer-events:none" onclick="App.doConnect()">Connect Portfolio</button>
-        <button class="flow-btn-ghost" onclick="App.showFlow('ob-' + (App.OB.length-1))">Back</button>
+        <div id="connect-broker-form"></div>
+        <button class="flow-btn-ghost" onclick="App.connectBack()">Back</button>
       </div>
 
     </div>
@@ -810,38 +822,234 @@ App.pickBroker = function(el, broker) {
   document.querySelectorAll('.broker-opt').forEach(b => b.classList.remove('sel'));
   el.classList.add('sel');
   App.st.broker = broker;
-  const btn = document.getElementById('connect-btn');
-  btn.style.opacity = '1';
-  btn.style.pointerEvents = 'all';
+  App.renderBrokerForm(broker);
 };
 
-App.doConnect = function() {
-  const btn = document.getElementById('connect-btn');
-  btn.textContent = 'Connecting…';
-  btn.style.opacity = '.65';
-  btn.style.pointerEvents = 'none';
-  setTimeout(App.enterApp, 1200);
+App.renderBrokerForm = function(broker) {
+  const host = document.getElementById('connect-broker-form');
+  if (broker === 't212') {
+    host.innerHTML = `
+      <div class="broker-form">
+        <div class="broker-form-note">Generate a read-only API key in the Trading 212 app: Settings → API (Beta) → Generate API key.</div>
+        <input type="password" class="ob-text" style="margin-bottom:0" id="t212-key" placeholder="Paste your API key">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
+          <input type="checkbox" id="t212-practice" style="width:auto"> This is a Practice (demo) account
+        </label>
+        <div class="field-error" id="t212-error" style="display:none"></div>
+        <button class="flow-btn" id="t212-submit" onclick="App.connectTrading212()">Connect Trading 212</button>
+      </div>`;
+  } else if (broker === 'ibkr') {
+    host.innerHTML = `
+      <div class="broker-form">
+        <div class="broker-form-note">Requires the AlyInvest IBKR bridge running next to a logged-in Client Portal Gateway (see /ibkr-bridge in the repo). Enter its public URL and shared secret.</div>
+        <input type="text" class="ob-text" style="margin-bottom:0" id="ibkr-url" placeholder="https://your-bridge-url">
+        <input type="password" class="ob-text" style="margin-bottom:0" id="ibkr-secret" placeholder="Bridge shared secret">
+        <div class="field-error" id="ibkr-error" style="display:none"></div>
+        <button class="flow-btn" id="ibkr-submit" onclick="App.connectIBKR()">Connect Interactive Brokers</button>
+      </div>`;
+  } else if (broker === 'csv') {
+    App._csvHoldings = null;
+    host.innerHTML = `
+      <div class="broker-form">
+        <label class="csv-file-label" id="csv-label">
+          <input type="file" accept=".csv,text/csv" id="csv-file" onchange="App.onCsvFile(this)">
+          <span id="csv-label-text">Click to choose a CSV file (Ticker, Shares, Avg Cost columns)</span>
+        </label>
+        <input type="number" class="ob-text" style="margin-bottom:0" id="csv-cash" placeholder="Uninvested cash (optional)" value="0">
+        <div class="field-error" id="csv-error" style="display:none"></div>
+        <button class="flow-btn" id="csv-submit" onclick="App.connectCSV()" style="opacity:.4;pointer-events:none">Import &amp; Continue</button>
+      </div>`;
+  } else if (broker === 'manual') {
+    host.innerHTML = `
+      <div class="broker-form">
+        <div id="manual-rows"></div>
+        <button class="flow-btn-ghost" style="margin-top:0" onclick="App.addManualRow()">+ Add holding</button>
+        <input type="number" class="ob-text" id="manual-cash" placeholder="Uninvested cash" value="0">
+        <div class="field-error" id="manual-error" style="display:none"></div>
+        <button class="flow-btn" onclick="App.connectManual()">Save &amp; Continue</button>
+      </div>`;
+    App._manualRowId = 0;
+    for (let i = 0; i < 3; i++) App.addManualRow();
+  }
 };
 
-// ─── ENTER APP ──────────────────────────────────────────
-App.enterApp = async function() {
-  App.st.onboarded = true;
-  document.getElementById('app').classList.remove('is-flow');
-  await App.loadAll();
+App.addManualRow = function() {
+  const id = App._manualRowId++;
+  document.getElementById('manual-rows').insertAdjacentHTML('beforeend', `
+    <div class="manual-row" data-row="${id}">
+      <input placeholder="Ticker" id="mr-ticker-${id}">
+      <input placeholder="Shares" type="number" id="mr-shares-${id}">
+      <input placeholder="Avg cost" type="number" id="mr-cost-${id}">
+      <div class="manual-row-remove" onclick="this.parentElement.remove()">✕</div>
+    </div>`);
+};
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+  const findIdx = names => header.findIndex(h => names.includes(h));
+  const tI = findIdx(['ticker', 'symbol']);
+  const sI = findIdx(['shares', 'quantity', 'qty']);
+  const cI = findIdx(['avgcost', 'averageprice', 'average price', 'cost basis', 'avg price', 'avg cost', 'cost']);
+  const pI = findIdx(['price', 'currentprice', 'current price', 'market price']);
+  if (tI === -1 || sI === -1) throw new Error('CSV needs at least a Ticker and Shares column.');
+  return lines.slice(1).map(line => {
+    const cols = line.split(',').map(c => c.trim());
+    return {
+      ticker: cols[tI],
+      shares: parseFloat(cols[sI]),
+      avgCost: cI > -1 ? parseFloat(cols[cI]) : undefined,
+      price: pI > -1 ? parseFloat(cols[pI]) : undefined,
+    };
+  }).filter(h => h.ticker && h.shares > 0);
+}
+
+App.onCsvFile = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const errEl = document.getElementById('csv-error');
+    try {
+      const rows = parseCSV(reader.result);
+      if (!rows.length) throw new Error('No valid rows found.');
+      App._csvHoldings = rows;
+      document.getElementById('csv-label-text').textContent = `${rows.length} holdings found in ${file.name}`;
+      errEl.style.display = 'none';
+      const btn = document.getElementById('csv-submit');
+      btn.style.opacity = '1'; btn.style.pointerEvents = 'all';
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  };
+  reader.readAsText(file);
+};
+
+async function submitConnect(url, body, errorElId, submitBtnId) {
+  const errEl = document.getElementById(errorElId);
+  const btn = submitBtnId ? document.getElementById(submitBtnId) : null;
+  errEl.style.display = 'none';
+  const originalLabel = btn ? btn.textContent : null;
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Connecting…'; }
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Connection failed.');
+    return data;
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = originalLabel; }
+    throw err;
+  }
+}
+
+App.connectTrading212 = async function() {
+  const apiKey = document.getElementById('t212-key').value.trim();
+  const practice = document.getElementById('t212-practice').checked;
+  const errEl = document.getElementById('t212-error');
+  if (!apiKey) { errEl.textContent = 'API key is required.'; errEl.style.display = 'block'; return; }
+  try {
+    await submitConnect('/api/connect/trading212', { apiKey, practice }, 't212-error', 't212-submit');
+    App.afterConnect();
+  } catch (e) { /* error already shown */ }
+};
+
+App.connectIBKR = async function() {
+  const bridgeUrl = document.getElementById('ibkr-url').value.trim();
+  const sharedSecret = document.getElementById('ibkr-secret').value.trim();
+  const errEl = document.getElementById('ibkr-error');
+  if (!bridgeUrl || !sharedSecret) { errEl.textContent = 'Both fields are required.'; errEl.style.display = 'block'; return; }
+  try {
+    await submitConnect('/api/connect/ibkr', { bridgeUrl, sharedSecret }, 'ibkr-error', 'ibkr-submit');
+    App.afterConnect();
+  } catch (e) { /* error already shown */ }
+};
+
+App.connectCSV = async function() {
+  if (!App._csvHoldings) return;
+  const cash = parseFloat(document.getElementById('csv-cash').value) || 0;
+  try {
+    await submitConnect('/api/connect/portfolio', { holdings: App._csvHoldings, cash, source: 'csv' }, 'csv-error', 'csv-submit');
+    App.afterConnect();
+  } catch (e) { /* error already shown */ }
+};
+
+App.connectManual = async function() {
+  const rows = [...document.querySelectorAll('.manual-row')].map(r => {
+    const id = r.dataset.row;
+    return {
+      ticker: document.getElementById('mr-ticker-' + id).value.trim(),
+      shares: parseFloat(document.getElementById('mr-shares-' + id).value),
+      avgCost: parseFloat(document.getElementById('mr-cost-' + id).value),
+    };
+  }).filter(r => r.ticker && r.shares > 0);
+  const cash = parseFloat(document.getElementById('manual-cash').value) || 0;
+  const errEl = document.getElementById('manual-error');
+  if (!rows.length) { errEl.textContent = 'Add at least one holding.'; errEl.style.display = 'block'; return; }
+  try {
+    await submitConnect('/api/connect/portfolio', { holdings: rows, cash, source: 'manual' }, 'manual-error', null);
+    App.afterConnect();
+  } catch (e) { /* error already shown */ }
+};
+
+App.afterConnect = async function() {
+  // A fresh connection can mean entirely different holdings than whatever
+  // analysis (if any) was last run — never show a stale analysis after
+  // switching brokers, always review the newly-connected portfolio fresh.
+  if (App.st.reconnecting) {
+    App.st.reconnecting = false;
+    document.getElementById('app').classList.remove('is-flow');
+    App.closeAll();
+  } else {
+    App.st.onboarded = true;
+    document.getElementById('app').classList.remove('is-flow');
+  }
+  await App.loadAll({ skipLatest: true });
+  App.runAnalysis();
   if (Notification && Notification.permission === 'default') {
     document.getElementById('push-banner').classList.add('show');
   }
 };
 
-App.loadAll = async function() {
-  const [portfolio, notifs, latest] = await Promise.all([
+App.connectBack = function() {
+  if (App.st.reconnecting) {
+    App.st.reconnecting = false;
+    document.getElementById('app').classList.remove('is-flow');
+    App.closeAll();
+  } else {
+    App.showFlow('ob-' + (App.OB.length - 1));
+  }
+};
+
+App.manageBrokerConnection = function() {
+  App.st.reconnecting = true;
+  document.getElementById('app').classList.add('is-flow');
+  document.querySelectorAll('.broker-opt').forEach(b => b.classList.remove('sel'));
+  document.getElementById('connect-broker-form').innerHTML = '';
+  App.showFlow('connect');
+};
+
+App.disconnectBroker = async function() {
+  if (!confirm('Disconnect this broker? AlyInvest will fall back to the demo portfolio.')) return;
+  await fetch('/api/disconnect-broker', { method: 'POST' });
+  App.loadAll();
+};
+
+App.loadAll = async function(opts) {
+  opts = opts || {};
+  const [portfolio, notifs, latest, brokerStatus] = await Promise.all([
     fetch('/api/portfolio').then(r => r.json()),
     fetch('/api/notifications').then(r => r.json()),
-    fetch('/api/analysis/latest').then(r => r.json()),
+    opts.skipLatest ? Promise.resolve(null) : fetch('/api/analysis/latest').then(r => r.json()),
+    fetch('/api/broker-status').then(r => r.json()),
   ]);
   App.portfolioView = portfolio;
   App.notifs = notifs;
   App.latestAnalysis = latest;
+  App.brokerStatus = brokerStatus;
   document.getElementById('health-score').textContent = latest ? latest.portfolioHealthScore : '—';
   App.renderConvo(latest);
   App.renderNotifs();
@@ -1113,6 +1321,7 @@ App.openNotifs = function() {
 App.renderSettings = function() {
   const p = App.portfolioView;
   if (!p) return;
+  const bs = App.brokerStatus || { type: null, label: 'Not connected' };
   const $ = (n,d=0) => Number(n).toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:d,maximumFractionDigits:d});
   document.getElementById('health-score').textContent = p.health ?? '—';
 
@@ -1180,15 +1389,19 @@ App.renderSettings = function() {
       <div class="s-section-title">Connected Broker</div>
       <div class="s-row">
         <div class="s-row-left">
-          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+          <div class="s-row-ico" style="background:${bs.type ? 'var(--gold-dim)' : 'var(--surface3)'};color:${bs.type ? 'var(--gold)' : 'var(--muted)'}">
             <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
           </div>
           <div>
-            <div class="s-row-lbl">${App.st.broker === 'ibkr' ? 'Interactive Brokers' : App.st.broker === 'rh' ? 'Robinhood' : 'Trading 212'}</div>
-            <div class="s-row-sub">Read-only · Simulated feed for this prototype</div>
+            <div class="s-row-lbl">${bs.label}</div>
+            <div class="s-row-sub">${bs.type ? 'Last synced ' + timeAgo(bs.lastSyncedAt) : 'Using the built-in demo portfolio'}</div>
           </div>
         </div>
-        <span style="font-size:11px;font-weight:600;color:var(--green)">Connected</span>
+        <span style="font-size:11px;font-weight:600;color:${bs.type ? 'var(--green)' : 'var(--subtle)'}">${bs.type ? 'Connected' : 'Demo'}</span>
+      </div>
+      <div class="mini-btn-row">
+        <button class="mini-btn" onclick="App.manageBrokerConnection()">${bs.type ? 'Change connection' : 'Connect a broker'}</button>
+        ${bs.type ? `<button class="mini-btn" onclick="App.disconnectBroker()">Disconnect</button>` : ''}
       </div>
     </div>
 

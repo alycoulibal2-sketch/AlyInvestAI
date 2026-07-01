@@ -1,0 +1,35 @@
+// Tracks which broker (if any) is the live source of truth for holdings/cash.
+// Single-user prototype: one connection record, not per-account. Secrets (API
+// keys, bridge shared secrets) live only here, server-side — the frontend never
+// receives them back.
+
+import { getStore } from '@netlify/blobs';
+
+function store() { return getStore('alyinvest'); }
+
+export async function get() {
+  return (await store().get('broker-connection', { type: 'json' })) || { type: null };
+}
+
+export async function set(connection) {
+  await store().set('broker-connection', JSON.stringify(connection));
+}
+
+export async function clear() {
+  await store().set('broker-connection', JSON.stringify({ type: null }));
+}
+
+// Safe-to-expose view for the Settings panel — never includes apiKey/sharedSecret.
+export function toPublicStatus(connection) {
+  if (!connection || !connection.type) return { type: null, label: 'Not connected' };
+  switch (connection.type) {
+    case 'trading212':
+      return { type: 'trading212', label: `Trading 212${connection.practice ? ' (Practice)' : ''}`, lastSyncedAt: connection.lastSyncedAt };
+    case 'ibkr':
+      return { type: 'ibkr', label: 'Interactive Brokers (via bridge)', lastSyncedAt: connection.lastSyncedAt };
+    case 'manual':
+      return { type: 'manual', label: connection.source === 'csv' ? 'CSV import' : 'Manual entry', lastSyncedAt: connection.lastSyncedAt };
+    default:
+      return { type: null, label: 'Not connected' };
+  }
+}
