@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>AlyInvest AI</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#07080c;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;background:none;border:none;cursor:pointer;padding:0}
+input,textarea{font-family:inherit}
+
+:root{
+  --bg:#07080c;
+  --surface:#0f1116;
+  --surface2:#161820;
+  --surface3:#1d2030;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --text:#e8eaf0;
+  --muted:rgba(232,234,240,0.5);
+  --subtle:rgba(232,234,240,0.28);
+  --gold:#C7A867;
+  --gold-dim:rgba(199,168,103,0.13);
+  --gold-glow:rgba(199,168,103,0.07);
+  --sky:#6FA8DC;
+  --sky-dim:rgba(111,168,220,0.12);
+  --green:#4BAE8A;
+  --green-dim:rgba(75,174,138,0.12);
+  --red:#E05555;
+  --red-dim:rgba(224,85,85,0.12);
+  --amber:#E8A840;
+  --topbar-h:56px;
+  --r:12px;
+  --r-sm:8px;
+  --r-full:999px;
+}
+
+/* ── APP SHELL ── */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+
+#flow{position:absolute;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center}
+#app.is-flow #flow{display:flex;flex-direction:column}
+#app.is-flow #app-shell{display:none}
+
+#app-shell{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:var(--topbar-h);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:rgba(7,8,12,0.96);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  position:relative;z-index:10
+}
+.topbar-brand{display:flex;align-items:center;gap:9px}
+.topbar-logomark{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,#a08038,var(--gold));
+  display:flex;align-items:center;justify-content:center
+}
+.topbar-logomark svg{width:15px;height:15px;fill:#07080c}
+.topbar-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+
+.topbar-center{
+  position:absolute;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px
+}
+.topbar-advisor{font-size:13px;font-weight:600;color:var(--text)}
+.topbar-online{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px}
+.topbar-online::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;display:inline-block}
+
+.topbar-right{display:flex;align-items:center;gap:10px}
+.health-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r-full);padding:5px 12px;cursor:pointer;transition:background .15s
+}
+.health-pill:hover{background:var(--surface3)}
+.health-score{font-size:13px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+.health-label{font-size:11px;color:var(--muted)}
+.bell-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;position:relative
+}
+.bell-btn:hover{background:var(--surface3)}
+.bell-btn svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.bell-badge{
+  position:absolute;top:-3px;right:-3px;
+  width:16px;height:16px;
+  background:var(--gold);border:2px solid var(--bg);
+  border-radius:50%;font-size:9px;font-weight:700;color:#07080c;
+  display:flex;align-items:center;justify-content:center
+}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(111,168,220,.2),rgba(111,168,220,.08));
+  border:1px solid rgba(111,168,220,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--sky);cursor:pointer
+}
+
+/* ── CONVERSATION ── */
+.conversation{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.messages{
+  flex:1;overflow-y:auto;
+  padding:20px 0 8px;
+  display:flex;flex-direction:column;
+  scroll-behavior:smooth
+}
+.messages::-webkit-scrollbar{width:3px}
+.messages::-webkit-scrollbar-track{background:transparent}
+.messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.day-sep{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 24px;
+  color:var(--subtle);font-size:11px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.8px
+}
+.day-sep::before,.day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.msg{display:flex;gap:10px;padding:3px 24px}
+.msg.advisor{flex-direction:row}
+.msg.user{flex-direction:row-reverse}
+.msg+.msg.advisor{margin-top:2px}
+.msg+.msg.user{margin-top:2px}
+
+.msg-av{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;align-self:flex-end;margin-bottom:1px
+}
+.msg.advisor .msg-av{background:linear-gradient(135deg,#9a7830,var(--gold));color:#07080c}
+.msg.user .msg-av{background:linear-gradient(135deg,#162030,#1e2d42);border:1px solid rgba(111,168,220,.2);color:var(--sky)}
+
+.msg-bubble{
+  max-width:min(540px,72%);
+  padding:11px 15px;border-radius:18px;
+  font-size:14.5px;line-height:1.57;color:var(--text)
+}
+.msg.advisor .msg-bubble{
+  background:var(--surface2);border:1px solid var(--border);
+  border-bottom-left-radius:4px
+}
+.msg.user .msg-bubble{
+  background:#182030;border:1px solid rgba(111,168,220,.18);
+  border-bottom-right-radius:4px;color:#c4d4e8
+}
+
+/* inline cards */
+.msg-card{margin:4px 24px 4px 62px;max-width:min(420px,78%)}
+.msg-card.user-side{margin:4px 24px 4px auto;max-width:min(420px,78%)}
+
+.card-alert{
+  background:var(--surface2);border:1px solid var(--border);
+  border-left:2px solid var(--gold);border-radius:var(--r);padding:14px 16px
+}
+.card-alert-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.card-alert-ico{
+  width:26px;height:26px;border-radius:6px;background:var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.card-alert-ico svg{width:13px;height:13px;stroke:var(--gold);fill:none;stroke-width:2}
+.card-alert-title{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.6px}
+.card-alert-rows{display:flex;flex-direction:column;gap:6px}
+.card-alert-row{display:flex;justify-content:space-between;align-items:center}
+.card-alert-lbl{font-size:13px;color:var(--muted)}
+.card-alert-val{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.val-bad{color:var(--red)}
+.val-warn{color:var(--amber)}
+
+.card-event{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px 15px;
+  display:flex;align-items:center;gap:12px
+}
+.card-event-ico{
+  width:34px;height:34px;border-radius:8px;background:var(--sky-dim);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.card-event-ico svg{width:16px;height:16px;stroke:var(--sky);fill:none;stroke-width:1.8}
+.card-event-body{flex:1}
+.card-event-ttl{font-size:13px;font-weight:600;color:var(--text)}
+.card-event-dt{font-size:11px;color:var(--muted);margin-top:2px}
+.card-event-tag{
+  font-size:10px;font-weight:700;padding:3px 9px;border-radius:var(--r-full);
+  background:var(--sky-dim);color:var(--sky);white-space:nowrap
+}
+
+.card-rec{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px
+}
+.card-rec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-rec-ticker{font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.card-rec-action{font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--r-full)}
+.action-hold{background:rgba(232,168,64,.14);color:var(--amber)}
+.action-buy{background:var(--green-dim);color:var(--green)}
+.action-reduce{background:var(--red-dim);color:var(--red)}
+.card-rec-reason{font-size:13px;color:var(--muted);line-height:1.45}
+.card-rec-conf{
+  display:flex;align-items:center;gap:8px;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--border)
+}
+.card-rec-conf-lbl{font-size:11px;color:var(--subtle)}
+.card-rec-conf-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.card-rec-conf-fill{height:100%;background:var(--gold);border-radius:2px}
+.card-rec-conf-pct{font-size:11px;font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* typing */
+.typing-dots{display:flex;gap:5px;align-items:center;padding:13px 16px}
+.typing-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--muted);
+  animation:tdot 1.2s ease-in-out infinite
+}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+
+/* suggestions */
+.suggestions{
+  display:flex;gap:7px;padding:8px 24px 2px;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0
+}
+.suggestions::-webkit-scrollbar{display:none}
+.sug-chip{
+  flex-shrink:0;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r-full);padding:7px 14px;
+  font-size:12.5px;color:var(--muted);cursor:pointer;
+  white-space:nowrap;transition:all .15s
+}
+.sug-chip:hover{background:var(--surface3);border-color:rgba(199,168,103,.35);color:var(--text)}
+
+/* input bar */
+.input-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px 14px;
+  background:var(--bg);border-top:1px solid var(--border);
+  flex-shrink:0
+}
+.chat-input{
+  flex:1;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r-full);
+  padding:11px 18px;font-size:14px;color:var(--text);
+  outline:none;transition:border-color .15s
+}
+.chat-input:focus{border-color:rgba(199,168,103,.35)}
+.chat-input::placeholder{color:var(--subtle)}
+.send-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s
+}
+.send-btn:hover{background:#d4b472;transform:scale(1.06)}
+.send-btn:active{transform:scale(.94)}
+.send-btn svg{width:15px;height:15px;fill:#07080c}
+
+/* ── PANELS ── */
+.backdrop{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  z-index:45;opacity:0;pointer-events:none;transition:opacity .22s
+}
+.backdrop.show{opacity:1;pointer-events:all}
+
+.panel{
+  position:absolute;top:0;right:0;bottom:0;width:360px;
+  background:var(--surface);border-left:1px solid var(--border);
+  z-index:50;display:flex;flex-direction:column;
+  transform:translateX(102%);transition:transform .24s cubic-bezier(.4,0,.2,1)
+}
+.panel.open{transform:translateX(0)}
+.panel-hd{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0
+}
+.panel-title{font-size:16px;font-weight:600;color:var(--text)}
+.panel-close{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer
+}
+.panel-close svg{width:11px;height:11px;stroke:var(--muted);fill:none;stroke-width:2.2}
+
+/* notif panel */
+#notif-list{
+  flex:1;overflow-y:auto;padding:12px;
+  display:flex;flex-direction:column;gap:8px
+}
+#notif-list::-webkit-scrollbar{width:3px}
+#notif-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.notif-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;cursor:pointer;transition:background .15s
+}
+.notif-item:hover{background:var(--surface3)}
+.notif-item.unread{border-left:2px solid var(--gold)}
+.notif-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.notif-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.notif-time{font-size:11px;color:var(--subtle);flex-shrink:0;padding-top:1px}
+.notif-body{font-size:12px;color:var(--muted);line-height:1.45}
+.ntag{
+  display:inline-block;font-size:10px;font-weight:600;
+  padding:2px 7px;border-radius:var(--r-full);margin-bottom:5px
+}
+.ntag-alert{background:var(--red-dim);color:var(--red)}
+.ntag-event{background:var(--sky-dim);color:var(--sky)}
+.ntag-update{background:var(--gold-dim);color:var(--gold)}
+.ntag-opportunity{background:var(--green-dim);color:var(--green)}
+
+/* settings panel */
+#settings-body{
+  flex:1;overflow-y:auto;padding:16px;
+  display:flex;flex-direction:column;gap:20px
+}
+#settings-body::-webkit-scrollbar{width:3px}
+#settings-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.s-section{display:flex;flex-direction:column;gap:7px}
+.s-section-title{font-size:11px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:.7px;padding:0 2px}
+.s-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);
+  transition:background .15s
+}
+.s-row.clickable{cursor:pointer}
+.s-row.clickable:hover{background:var(--surface3)}
+.s-row-left{display:flex;align-items:center;gap:10px}
+.s-row-ico{
+  width:30px;height:30px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.s-row-ico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.s-row-lbl{font-size:13.5px;color:var(--text)}
+.s-row-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.s-row-right{display:flex;align-items:center;gap:6px}
+.s-row-right svg{width:13px;height:13px;stroke:var(--subtle);fill:none;stroke-width:2}
+.toggle{
+  width:36px;height:20px;background:var(--surface3);border-radius:10px;
+  position:relative;cursor:pointer;border:1px solid var(--border2);transition:background .2s;flex-shrink:0
+}
+.toggle.on{background:var(--gold);border-color:var(--gold)}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:14px;height:14px;border-radius:50%;background:white;transition:transform .2s
+}
+.toggle.on::after{transform:translateX(16px)}
+
+.port-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px
+}
+.port-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.port-val{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.port-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.port-badge{font-size:11px;font-weight:600;background:var(--green-dim);color:var(--green);padding:3px 9px;border-radius:var(--r-full)}
+.port-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.port-stat-lbl{font-size:11px;color:var(--muted)}
+.port-stat-val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* ── FLOW SCREENS ── */
+#flow{overflow-y:auto}
+.flow-wrap{width:100%;max-width:440px;padding:40px 24px;margin:auto;display:flex;flex-direction:column}
+
+.flow-screen{display:none;flex-direction:column}
+.flow-screen.active{display:flex}
+
+/* welcome */
+.wlc-logo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:44px}
+.wlc-mark{
+  width:70px;height:70px;border-radius:18px;
+  background:linear-gradient(145deg,#9a7830,var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(199,168,103,.2),0 8px 32px rgba(199,168,103,.15)
+}
+.wlc-mark svg{width:34px;height:34px;fill:#07080c}
+.wlc-tagline{font-size:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.wlc-h{font-size:27px;font-weight:700;color:var(--text);text-align:center;line-height:1.2;letter-spacing:-.4px;margin-bottom:10px}
+.wlc-sub{font-size:15px;color:var(--muted);text-align:center;line-height:1.55;margin-bottom:36px}
+.auth-btns{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.auth-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px 20px;border-radius:var(--r);
+  font-size:14.5px;font-weight:600;transition:all .15s;border:none
+}
+.auth-btn svg{width:18px;height:18px}
+.auth-apple{background:var(--text);color:#07080c}
+.auth-apple:hover{background:#c8cad0}
+.auth-google{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.auth-google:hover{background:var(--surface3)}
+.auth-email{background:transparent;color:var(--gold);border:1px solid rgba(199,168,103,.28)}
+.auth-email:hover{background:var(--gold-glow)}
+.auth-or{text-align:center;font-size:11px;color:var(--subtle);margin:2px 0}
+.legal{font-size:11px;color:var(--subtle);text-align:center;line-height:1.5}
+.legal a{color:var(--muted);text-decoration:underline;cursor:pointer}
+
+/* intro */
+.intro-av{
+  width:78px;height:78px;border-radius:50%;
+  background:linear-gradient(145deg,#9a7830,var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;color:#07080c;
+  margin:0 auto 20px;
+  box-shadow:0 0 0 6px rgba(199,168,103,.1),0 0 0 12px rgba(199,168,103,.05)
+}
+.intro-label{font-size:12px;font-weight:600;color:var(--gold);text-align:center;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
+.intro-bubble{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:18px;border-top-left-radius:4px;
+  padding:18px 20px;font-size:15px;color:var(--text);line-height:1.6;
+  margin-bottom:24px
+}
+.intro-bubble p+p{margin-top:12px}
+
+/* flow buttons */
+.flow-btn{
+  background:var(--gold);color:#07080c;border:none;
+  border-radius:var(--r);padding:14px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:all .15s;width:100%
+}
+.flow-btn:hover{background:#d4b472}
+.flow-btn-ghost{
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border2);border-radius:var(--r);
+  padding:12px;font-size:14px;font-weight:500;cursor:pointer;
+  font-family:inherit;transition:all .15s;width:100%;margin-top:8px
+}
+.flow-btn-ghost:hover{background:var(--surface2);color:var(--text)}
+
+/* onboarding */
+.ob-progress{display:flex;gap:5px;margin-bottom:30px}
+.ob-dot{height:3px;flex:1;border-radius:2px;background:var(--border2);transition:background .25s}
+.ob-dot.done{background:var(--gold)}
+.ob-dot.cur{background:rgba(199,168,103,.45)}
+.ob-q{font-size:21px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:8px;letter-spacing:-.3px}
+.ob-sub{font-size:14px;color:var(--muted);margin-bottom:26px;line-height:1.45}
+.ob-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.ob-opt{
+  padding:13px 15px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r);
+  font-size:14px;color:var(--text);cursor:pointer;
+  transition:all .15s;text-align:left;font-family:inherit
+}
+.ob-opt:hover{background:var(--surface3);border-color:rgba(199,168,103,.28)}
+.ob-opt.sel{background:var(--gold-dim);border-color:var(--gold)}
+.ob-opt-desc{font-size:11.5px;color:var(--muted);display:block;margin-top:3px}
+.ob-text{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:13px 15px;font-size:14px;color:var(--text);
+  outline:none;resize:none;transition:border-color .15s;margin-bottom:20px
+}
+.ob-text:focus{border-color:rgba(199,168,103,.35)}
+.ob-text::placeholder{color:var(--subtle)}
+
+/* connect */
+.connect-readonly{
+  background:linear-gradient(135deg,rgba(199,168,103,.07),rgba(199,168,103,.03));
+  border:1px solid rgba(199,168,103,.18);border-radius:var(--r);
+  padding:14px 15px;margin-bottom:20px;display:flex;gap:12px
+}
+.connect-readonly svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.connect-ro-txt{font-size:13px;color:var(--muted);line-height:1.5}
+.connect-ro-txt strong{color:var(--gold)}
+.broker-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.broker-opt{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 15px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r);
+  cursor:pointer;transition:all .15s;text-align:left
+}
+.broker-opt:hover{background:var(--surface3);border-color:rgba(199,168,103,.28)}
+.broker-opt.sel{background:var(--gold-dim);border-color:var(--gold)}
+.broker-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.b-212{background:#1a3a5e;color:var(--sky)}
+.b-ibkr{background:#2a1a0e;color:var(--amber)}
+.b-rh{background:#1a3a1a;color:var(--green)}
+.b-csv,.b-manual{background:var(--surface3);color:var(--muted)}
+.b-csv svg,.b-manual svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.broker-name{font-size:14px;font-weight:600;color:var(--text)}
+.broker-sub{font-size:11px;color:var(--muted)}
+
+/* ── ANIMATIONS ── */
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg-in{animation:msgIn .22s ease-out forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease-out forwards}
+</style>
+</head>
+<body>
+<div id="app" class="is-flow">
+
+  <!-- ════════ FLOW ════════ -->
+  <div id="flow">
+    <div class="flow-wrap">
+
+      <!-- WELCOME -->
+      <div class="flow-screen active" data-screen="welcome">
+        <div class="wlc-logo">
+          <div class="wlc-mark">
+            <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
+          </div>
+          <span class="wlc-tagline">Your personal investment advisor</span>
+        </div>
+        <h1 class="wlc-h">Smarter investing starts with a conversation.</h1>
+        <p class="wlc-sub">AlyInvest is your personal AI wealth advisor — not a trading platform. It analyzes your portfolio and gives you expert, personalized guidance.</p>
+        <div class="auth-btns">
+          <button class="auth-btn auth-apple" onclick="App.auth('apple')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Continue with Apple
+          </button>
+          <button class="auth-btn auth-google" onclick="App.auth('google')">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <div class="auth-or">or</div>
+          <button class="auth-btn auth-email" onclick="App.auth('email')">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+            Continue with Email
+          </button>
+        </div>
+        <p class="legal">By continuing you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>.<br>AlyInvest never executes trades or holds your money.</p>
+      </div>
+
+      <!-- EMAIL SIGNUP -->
+      <div class="flow-screen" data-screen="signup">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Create account</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px">Welcome to AlyInvest.</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:28px">Your data is encrypted and never shared.</div>
+        <input type="text" class="ob-text" placeholder="Full name" style="margin-bottom:10px" id="su-name">
+        <input type="email" class="ob-text" placeholder="Email address" style="margin-bottom:10px" id="su-email">
+        <input type="password" class="ob-text" placeholder="Password" style="margin-bottom:20px" id="su-pwd">
+        <button class="flow-btn" onclick="App.auth('email-done')">Create Account</button>
+        <button class="flow-btn-ghost" onclick="App.showFlow('welcome')">Back</button>
+      </div>
+
+      <!-- ADVISOR INTRO -->
+      <div class="flow-screen" data-screen="intro">
+        <div class="intro-av">A</div>
+        <div class="intro-label">Alex · Your Advisor</div>
+        <div class="intro-bubble">
+          <p>Hi, I'm Alex — your personal investment advisor.</p>
+          <p>I'll analyze your portfolio, explain every recommendation in plain language, and remember everything we discuss. Over time, I'll understand your goals better than any algorithm.</p>
+          <p>Before we begin, I'd like to ask you a few questions so I can personalize everything for you.</p>
+        </div>
+        <button class="flow-btn" onclick="App.startOb()">Let's begin</button>
+        <button class="flow-btn-ghost" onclick="App.showFlow('welcome')">Go back</button>
+      </div>
+
+      <!-- ONBOARDING steps injected by JS -->
+      <div id="ob-steps"></div>
+
+      <!-- CONNECT PORTFOLIO -->
+      <div class="flow-screen" data-screen="connect">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Final step</div>
+        <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px">Connect your portfolio</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:20px">I need to see your holdings to give you accurate advice.</div>
+        <div class="connect-readonly">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="connect-ro-txt"><strong>Read-only access, always.</strong> AlyInvest never executes trades, never holds money, and never moves assets. We only read your portfolio data to provide analysis.</div>
+        </div>
+        <div class="broker-list">
+          <button class="broker-opt" onclick="App.pickBroker(this,'t212')">
+            <div class="broker-ico b-212">212</div>
+            <div><div class="broker-name">Trading 212</div><div class="broker-sub">Connect via secure OAuth</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'ibkr')">
+            <div class="broker-ico b-ibkr">IB</div>
+            <div><div class="broker-name">Interactive Brokers</div><div class="broker-sub">Connect via secure OAuth</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'rh')">
+            <div class="broker-ico b-rh">RH</div>
+            <div><div class="broker-name">Robinhood</div><div class="broker-sub">Connect via secure OAuth</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'csv')">
+            <div class="broker-ico b-csv"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><div class="broker-name">CSV Import</div><div class="broker-sub">Upload a spreadsheet export</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'manual')">
+            <div class="broker-ico b-manual"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+            <div><div class="broker-name">Manual Entry</div><div class="broker-sub">Enter holdings manually</div></div>
+          </button>
+        </div>
+        <button class="flow-btn" id="connect-btn" style="opacity:.38;pointer-events:none" onclick="App.doConnect()">Connect Portfolio</button>
+        <button class="flow-btn-ghost" onclick="App.showFlow('ob-' + (App.OB.length-1))">Back</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════ APP SHELL ════════ -->
+  <div id="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">
+        <div class="topbar-logomark">
+          <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
+        </div>
+        <span class="topbar-name">AlyInvest</span>
+      </div>
+      <div class="topbar-center">
+        <span class="topbar-advisor">Your Advisor · Alex</span>
+        <span class="topbar-online">Active now</span>
+      </div>
+      <div class="topbar-right">
+        <div class="health-pill" onclick="App.openSettings()">
+          <span class="health-score" id="health-score">94</span>
+          <span class="health-label">Portfolio Health</span>
+        </div>
+        <div class="bell-btn" onclick="App.openNotifs()">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="bell-badge" id="bell-badge">3</span>
+        </div>
+        <div class="avatar" onclick="App.openSettings()">AC</div>
+      </div>
+    </div>
+
+    <div class="conversation">
+      <div class="messages" id="messages"></div>
+      <div class="suggestions" id="suggestions"></div>
+      <div class="input-bar">
+        <input class="chat-input" id="chat-input" placeholder="Ask your advisor anything…" autocomplete="off">
+        <button class="send-btn" onclick="App.send()">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ PANELS ════════ -->
+  <div class="backdrop" id="backdrop" onclick="App.closeAll()"></div>
+
+  <div class="panel" id="notif-panel">
+    <div class="panel-hd">
+      <span class="panel-title">Notifications</span>
+      <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+
+  <div class="panel" id="settings-panel">
+    <div class="panel-hd">
+      <span class="panel-title">Portfolio &amp; Settings</span>
+      <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+    </div>
+    <div id="settings-body"></div>
+  </div>
+
+</div>
+<script>
+(function(){
+'use strict';
+
+// ─── DATA ───────────────────────────────────────────────
+const DB = {
+  user:{ name:'Aly', initials:'AC' },
+  portfolio:{
+    total:88743.51, dayChg:312.44, dayChgPct:.35,
+    totalRet:14253.21, totalRetPct:19.1,
+    health:94, risk:'Moderate', diversif:79,
+    holdings:[
+      {t:'MSFT',n:'Microsoft',v:27510.49,pct:31.0,d:+2.1},
+      {t:'NVDA',n:'NVIDIA',v:10649.22,pct:12.0,d:+0.8},
+      {t:'AAPL',n:'Apple',v:8874.35,pct:10.0,d:-0.3},
+      {t:'VOO', n:'Vanguard S&P 500',v:7987.92,pct:9.0,d:+0.4},
+      {t:'V',   n:'Visa',v:6174.12,pct:7.0,d:+0.1},
+      {t:'JNJ', n:'Johnson & Johnson',v:4437.18,pct:5.0,d:-0.2},
+    ]
+  },
+  notifs:[
+    {id:1,unread:true,tag:'alert',tl:'Alert',title:'Technology concentration reached 43%',body:'Microsoft and NVIDIA together represent 43% of your portfolio. This exceeds your stated preference of 35%. Consider rebalancing.',time:'2h ago'},
+    {id:2,unread:true,tag:'event',tl:'Earnings',title:'Microsoft reports earnings Thursday',body:'MSFT Q4 FY2026 earnings call is scheduled for Thursday, July 3. This is your largest holding at 31%.',time:'5h ago'},
+    {id:3,unread:true,tag:'update',tl:'Update',title:'Recommendation updated: MSFT',body:'I\'ve revised my Microsoft recommendation from ADD to HOLD following yesterday\'s 4.2% gain. New target range: $430–$450.',time:'Yesterday'},
+    {id:4,unread:false,tag:'opportunity',tl:'Opportunity',title:'Healthcare sector underweighted',body:'Your healthcare allocation is 5%, below your target of 10–15%. JNJ has strong fundamentals and aligns with your dividend preference.',time:'2 days ago'},
+    {id:5,unread:false,tag:'event',tl:'Dividend',title:'Visa declares quarterly dividend',body:'V will pay $0.59/share on July 15 to shareholders of record June 28.',time:'3 days ago'},
+  ]
+};
+
+const HISTORY = [
+  {type:'day',label:'Yesterday'},
+  {type:'a',text:"Good morning, Aly. I've reviewed your portfolio and everything looks stable. Your holdings are well-positioned ahead of this week's earnings calendar."},
+  {type:'u',text:"Anything I should be watching?"},
+  {type:'a',text:"Microsoft reports on Thursday. It currently represents 28% of your portfolio — your largest single holding. I'll monitor it closely and notify you before the earnings call."},
+  {type:'event',title:'MSFT Earnings',date:'Thursday, July 3 · After market close',tag:'Earnings'},
+  {type:'u',text:"What about NVIDIA? I've been thinking about adding more."},
+  {type:'a',text:"NVIDIA is already 11% of your portfolio. Combined with Microsoft, your two largest positions represent 39% of your total value — both in technology with heavy AI exposure. I'd recommend waiting to see how Thursday's earnings play out before adding more."},
+  {type:'day',label:'Today'},
+  {type:'a',text:"Good morning, Aly. I analyzed your portfolio overnight. There's one important change I'd like to discuss."},
+  {type:'alert',rows:[
+    {label:'Technology concentration',from:'39%',to:'43%',cls:'val-bad'},
+    {label:'Diversification score',from:'87',to:'79',cls:'val-warn'},
+    {label:'MSFT position size',from:'28%',to:'31%',cls:'val-bad'},
+  ]},
+  {type:'a',text:"Microsoft gained 4.2% after strong earnings yesterday. Your position has grown from 28% to 31%, and your overall technology concentration is now 43%.\n\nThis exceeds your diversification preference. I'd like to walk you through what I recommend."},
+  {type:'rec',ticker:'MSFT',action:'hold',al:'HOLD',reason:'Strong fundamentals, but the position has grown beyond your target concentration. Hold and review rebalancing toward healthcare and international markets.',conf:72},
+];
+
+const OB_QS = [
+  {q:"How would you describe your investment experience?",sub:"This helps me calibrate how I explain things to you.",opts:[
+    {l:"Just getting started",d:"I'm learning the basics"},
+    {l:"Some experience",d:"A few years of investing"},
+    {l:"Experienced investor",d:"I've been investing for 5+ years"},
+    {l:"Professional background",d:"I work in finance or have deep knowledge"},
+  ]},
+  {q:"What is your primary investment goal?",sub:"I'll personalize every recommendation around this.",opts:[
+    {l:"Long-term wealth building",d:"Grow over 10+ years"},
+    {l:"Retirement planning",d:"Building a retirement nest egg"},
+    {l:"Passive income",d:"Dividends and regular cash flow"},
+    {l:"Capital preservation",d:"Protecting what I have"},
+  ]},
+  {q:"How do you feel about investment risk?",sub:"There's no wrong answer — this shapes your strategy.",opts:[
+    {l:"Conservative",d:"Stability over higher returns"},
+    {l:"Moderately conservative",d:"Mostly stable, some growth"},
+    {l:"Moderate",d:"Balanced approach"},
+    {l:"Moderately aggressive",d:"Growth-focused, comfortable with volatility"},
+    {l:"Aggressive",d:"Maximum growth, can handle large swings"},
+  ]},
+  {q:"What is your investment time horizon?",sub:"How long before you'd need to access these funds?",opts:[
+    {l:"Less than 3 years",d:"Short-term needs"},
+    {l:"3 to 7 years",d:"Medium-term goals"},
+    {l:"7 to 15 years",d:"Long-term growth"},
+    {l:"15+ years",d:"Very long horizon, maximum compounding"},
+  ]},
+  {q:"How much do you invest each month?",sub:"Approximately — this helps me size recommendations.",opts:[
+    {l:"Less than $500"},{l:"$500 – $1,500"},{l:"$1,500 – $5,000"},{l:"More than $5,000"}
+  ]},
+  {q:"Which sectors interest you most?",sub:"I'll focus my analysis on your areas of interest.",multi:true,opts:[
+    {l:"Technology"},{l:"Healthcare"},{l:"Consumer Goods"},{l:"Financials"},
+    {l:"Energy"},{l:"Real Estate"},{l:"International"},{l:"ETFs / Index Funds"},
+  ]},
+  {q:"What matters most in a recommendation?",sub:"This shapes how I prioritize advice.",opts:[
+    {l:"Risk-adjusted return",d:"Best return for the risk taken"},
+    {l:"Dividend income",d:"Regular cash flow from investments"},
+    {l:"Long-term appreciation",d:"Compounding growth over time"},
+    {l:"Portfolio diversification",d:"Spreading risk across asset classes"},
+  ]},
+  {q:"Tell me about your current portfolio.",sub:"Any existing investments, accounts, or notable holdings?",text:true,ph:"e.g. \"About $80k mostly in US tech stocks and some index funds\""},
+];
+
+// ─── APP ────────────────────────────────────────────────
+const App = window.App = {};
+App.OB = OB_QS;
+
+App.st = {
+  onboarded: false,
+  obStep: 0,
+  obAnswers: {},
+  broker: null,
+};
+
+// ─── FLOW ────────────────────────────────────────────────
+App.showFlow = function(id) {
+  document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+  const el = document.querySelector('[data-screen="' + id + '"]');
+  if (el) el.classList.add('active');
+  document.getElementById('flow').scrollTop = 0;
+};
+
+App.auth = function(m) {
+  if (m === 'email') { App.showFlow('signup'); }
+  else { App.showFlow('intro'); }
+};
+
+App.startOb = function() {
+  App.buildOb();
+  App.st.obStep = 0;
+  App.showFlow('ob-0');
+};
+
+App.buildOb = function() {
+  const host = document.getElementById('ob-steps');
+  if (host.childElementCount > 0) return;
+  const total = OB_QS.length;
+  host.innerHTML = OB_QS.map((q, i) => `
+    <div class="flow-screen" data-screen="ob-${i}">
+      <div class="ob-progress">
+        ${OB_QS.map((_,j) => `<div class="ob-dot ${j<i?'done':j===i?'cur':''}"></div>`).join('')}
+      </div>
+      <div class="ob-q">${q.q}</div>
+      ${q.sub ? `<div class="ob-sub">${q.sub}</div>` : ''}
+      ${q.text ? `
+        <textarea class="ob-text" id="ob-txt-${i}" rows="3" placeholder="${q.ph||''}"></textarea>
+        <button class="flow-btn" onclick="App.obNext(${i})">Continue</button>
+      ` : `
+        <div class="ob-opts" id="ob-opts-${i}">
+          ${q.opts.map((o,oi) => `
+            <button class="ob-opt" data-step="${i}" data-oi="${oi}" onclick="App.obPick(this,${i},${!!q.multi})">
+              ${o.l}${o.d ? `<span class="ob-option-desc">${o.d}</span>` : ''}
+            </button>
+          `).join('')}
+        </div>
+        ${q.multi ? `<button class="flow-btn" id="ob-cont-${i}" style="display:none;margin-top:4px" onclick="App.obNext(${i})">Continue</button>` : ''}
+      `}
+      ${i > 0 ? `<button class="flow-btn-ghost" onclick="App.obBack(${i})">Back</button>` : ''}
+    </div>
+  `).join('');
+};
+
+App.obPick = function(el, step, multi) {
+  if (multi) {
+    el.classList.toggle('sel');
+    const any = document.querySelectorAll('#ob-opts-' + step + ' .ob-opt.sel').length > 0;
+    const btn = document.getElementById('ob-cont-' + step);
+    if (btn) btn.style.display = any ? 'block' : 'none';
+    App.st.obAnswers[step] = [...document.querySelectorAll('#ob-opts-' + step + ' .ob-opt.sel')].map(b => b.childNodes[0].textContent.trim());
+  } else {
+    document.querySelectorAll('#ob-opts-' + step + ' .ob-opt').forEach(b => b.classList.remove('sel'));
+    el.classList.add('sel');
+    App.st.obAnswers[step] = el.childNodes[0].textContent.trim();
+    setTimeout(() => App.obNext(step), 200);
+  }
+};
+
+App.obNext = function(i) {
+  if (i + 1 < OB_QS.length) { App.showFlow('ob-' + (i+1)); }
+  else { App.showFlow('connect'); }
+};
+
+App.obBack = function(i) {
+  if (i <= 0) { App.showFlow('intro'); }
+  else { App.showFlow('ob-' + (i-1)); }
+};
+
+App.pickBroker = function(el, broker) {
+  document.querySelectorAll('.broker-opt').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  App.st.broker = broker;
+  const btn = document.getElementById('connect-btn');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'all';
+};
+
+App.doConnect = function() {
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = 'Connecting…';
+  btn.style.opacity = '.65';
+  btn.style.pointerEvents = 'none';
+  setTimeout(App.enterApp, 1400);
+};
+
+// ─── ENTER APP ──────────────────────────────────────────
+App.enterApp = function() {
+  App.st.onboarded = true;
+  document.getElementById('app').classList.remove('is-flow');
+  App.renderConvo();
+  App.renderNotifs();
+  App.renderSettings();
+};
+
+// ─── CONVERSATION ────────────────────────────────────────
+function $m(html) {
+  const msgs = document.getElementById('messages');
+  msgs.insertAdjacentHTML('beforeend', html);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderMsg(m) {
+  switch(m.type) {
+    case 'day':
+      return `<div class="day-sep">${m.label}</div>`;
+    case 'a':
+      return `<div class="msg advisor msg-in"><div class="msg-av">A</div><div class="msg-bubble">${m.text.replace(/\n/g,'<br>')}</div></div>`;
+    case 'u':
+      return `<div class="msg user msg-in"><div class="msg-av">AC</div><div class="msg-bubble">${m.text}</div></div>`;
+    case 'alert':
+      return `<div class="msg-card">
+        <div class="card-alert">
+          <div class="card-alert-hd">
+            <div class="card-alert-ico"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <span class="card-alert-title">Portfolio Change Detected</span>
+          </div>
+          <div class="card-alert-rows">
+            ${m.rows.map(r=>`<div class="card-alert-row"><span class="card-alert-lbl">${r.label}</span><span class="card-alert-val ${r.cls}">${r.from} → ${r.to}</span></div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    case 'event':
+      return `<div class="msg-card">
+        <div class="card-event">
+          <div class="card-event-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <div class="card-event-body"><div class="card-event-ttl">${m.title}</div><div class="card-event-dt">${m.date}</div></div>
+          <span class="card-event-tag">${m.tag}</span>
+        </div>
+      </div>`;
+    case 'rec':
+      return `<div class="msg-card">
+        <div class="card-rec">
+          <div class="card-rec-hd"><span class="card-rec-ticker">${m.ticker}</span><span class="card-rec-action action-${m.action}">${m.al}</span></div>
+          <div class="card-rec-reason">${m.reason}</div>
+          <div class="card-rec-conf">
+            <span class="card-rec-conf-lbl">Confidence</span>
+            <div class="card-rec-conf-bar"><div class="card-rec-conf-fill" style="width:${m.conf}%"></div></div>
+            <span class="card-rec-conf-pct">${m.conf}%</span>
+          </div>
+        </div>
+      </div>`;
+    default: return '';
+  }
+}
+
+App.renderConvo = function() {
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = HISTORY.map(renderMsg).join('');
+  msgs.scrollTop = msgs.scrollHeight;
+  renderSuggestions();
+};
+
+function renderSuggestions() {
+  const chips = ['Should I rebalance?','Explain my risk','What changed today?','Should I buy NVDA?','Show my holdings','Best sectors now?'];
+  document.getElementById('suggestions').innerHTML = chips.map(c =>
+    `<div class="sug-chip" onclick="App.suggest('${c.replace(/'/g,"\\'")}')">${c}</div>`
+  ).join('');
+}
+
+App.suggest = function(txt) {
+  document.getElementById('chat-input').value = txt;
+  App.send();
+};
+
+App.send = function() {
+  const inp = document.getElementById('chat-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  $m(renderMsg({type:'u',text:txt}));
+  setTimeout(showTyping, 280);
+  setTimeout(() => { hideTyping(); $m(renderMsg(respond(txt))); }, 1700);
+};
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  msgs.insertAdjacentHTML('beforeend', `<div id="typing-row" class="msg advisor"><div class="msg-av">A</div><div class="msg-bubble" style="padding:0"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function hideTyping() {
+  const t = document.getElementById('typing-row');
+  if (t) t.remove();
+}
+
+function respond(txt) {
+  const t = txt.toLowerCase();
+  if (t.includes('rebalanc')) return {type:'a',text:"Based on your current holdings, here's what I recommend.\n\nYour technology allocation of 43% is above your stated comfort level. I suggest reducing your Microsoft position by $5,000–$7,000 gradually over the next 2–3 months, and reallocating to healthcare and international developed markets.\n\nThis isn't urgent. Microsoft remains a high-quality holding. But managing concentration now gives you more options later."};
+  if (t.includes('risk')) return {type:'a',text:"Your stated risk profile is Moderate — but your portfolio is behaving slightly more aggressively.\n\nYour diversification score dropped from 87 to 79 this week, primarily because Microsoft's position grew. Your top two holdings (MSFT + NVDA) together represent 43% of your portfolio — both in technology with heavy AI exposure.\n\nFor a moderate investor, I typically recommend keeping any single sector below 35%."};
+  if (t.includes('nvda') || t.includes('nvidia')) return {type:'a',text:"NVIDIA is a high-quality holding and your conviction is sound. But at 12% of your portfolio, it's already a significant position.\n\nCombined with Microsoft, you have 43% in technology — mostly companies with overlapping AI exposure. Adding more NVIDIA would concentrate that further.\n\nMy recommendation: hold your existing position. Once you've rebalanced Microsoft, we can revisit whether additional NVIDIA exposure makes sense."};
+  if (t.includes('changed') || t.includes('today')) return {type:'a',text:"Here's what changed since yesterday:\n\n• Microsoft gained 4.2% post-earnings, growing your tech concentration from 39% to 43%.\n• Your diversification score fell from 87 to 79.\n• I updated my MSFT recommendation from ADD to HOLD.\n\nNo other significant changes in your portfolio today."};
+  if (t.includes('holding') || t.includes('portfolio')) return {type:'a',text:"Your portfolio is currently valued at $88,743.\n\nTop holdings:\n• MSFT — 31% · $27,510\n• NVDA — 12% · $10,649\n• AAPL — 10% · $8,874\n• VOO  — 9%  · $7,988\n• V    — 7%  · $6,174\n• JNJ  — 5%  · $4,437\n\nTechnology concentration (MSFT + NVDA + AAPL) is the main thing I'm watching right now."};
+  if (t.includes('sector')) return {type:'a',text:"Based on your goals and the current environment, here are the sectors I'd focus on:\n\n1. Healthcare — You're at 5%, well below target. Defensive, dividend-growing, low correlation to your tech holdings.\n2. International developed — At 3%, underweight for geographic diversification.\n3. Financials — Historically strong in a higher-rate environment.\n\nI'd be cautious about adding more technology given your current 43% concentration."};
+  return {type:'a',text:"Good question. Let me think through your specific situation.\n\nBased on your portfolio today — $88,743 with a 43% technology concentration and a moderate risk profile — my view is that any changes should be measured and deliberate.\n\nIs there a specific holding or concern you'd like me to focus on?"};
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────
+App.renderNotifs = function() {
+  document.getElementById('notif-list').innerHTML = DB.notifs.map(n => `
+    <div class="notif-item ${n.unread?'unread':''}" onclick="App.notifTap(${n.id})">
+      <div class="notif-hd">
+        <div><span class="ntag ntag-${n.tag}">${n.tl}</span><div class="notif-title">${n.title}</div></div>
+        <span class="notif-time">${n.time}</span>
+      </div>
+      <div class="notif-body">${n.body}</div>
+    </div>
+  `).join('');
+};
+
+App.notifTap = function(id) {
+  const n = DB.notifs.find(x => x.id === id);
+  if (!n) return;
+  n.unread = false;
+  App.renderNotifs();
+  App.closeAll();
+  setTimeout(() => {
+    $m(renderMsg({type:'u',text:n.title}));
+    setTimeout(showTyping, 280);
+    setTimeout(() => {
+      hideTyping();
+      $m(renderMsg({type:'a',text:`${n.body}\n\nWould you like me to go into more detail or show you what I recommend?`}));
+    }, 1600);
+  }, 300);
+  // update badge
+  const unreadCount = DB.notifs.filter(x => x.unread).length;
+  const badge = document.getElementById('bell-badge');
+  if (unreadCount === 0) { badge.style.display = 'none'; }
+  else { badge.textContent = unreadCount; }
+};
+
+App.openNotifs = function() {
+  document.getElementById('notif-panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+};
+
+// ─── SETTINGS ────────────────────────────────────────────
+App.renderSettings = function() {
+  const p = DB.portfolio;
+  const $ = (n,d=0) => n.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:d,maximumFractionDigits:d});
+
+  document.getElementById('settings-body').innerHTML = `
+    <div class="port-card">
+      <div class="port-card-top">
+        <div><div class="port-val">${$(p.total)}</div><div class="port-lbl">Total portfolio value</div></div>
+        <span class="port-badge">+${p.dayChgPct}% today</span>
+      </div>
+      <div class="port-stats">
+        <div><div class="port-stat-lbl">Total return</div><div class="port-stat-val" style="color:var(--green)">+${$(p.totalRet)} (${p.totalRetPct}%)</div></div>
+        <div><div class="port-stat-lbl">Portfolio health</div><div class="port-stat-val">${p.health}/100</div></div>
+        <div><div class="port-stat-lbl">Risk level</div><div class="port-stat-val">${p.risk}</div></div>
+        <div><div class="port-stat-lbl">Diversification</div><div class="port-stat-val">${p.diversif}/100</div></div>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Holdings</div>
+      ${p.holdings.map(h => `
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-ico" style="background:var(--surface3);color:var(--muted)">
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <div>
+              <div class="s-row-lbl">${h.t} <span style="font-weight:400;color:var(--muted);font-size:12px">· ${h.n}</span></div>
+              <div class="s-row-sub">${h.pct}% of portfolio</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">${$(h.v)}</div>
+            <div style="font-size:11px;color:${h.d>=0?'var(--green)':'var(--red)'}">${h.d>=0?'+':''}${h.d}%</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Connected Broker</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+            <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+          </div>
+          <div>
+            <div class="s-row-lbl">Trading 212</div>
+            <div class="s-row-sub">Read-only · Last synced 2 min ago</div>
+          </div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:var(--green)">Connected</span>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Notifications</div>
+      ${[
+        {l:'Portfolio alerts',s:'Concentration, risk changes',on:true},
+        {l:'Earnings calendar',s:'Upcoming earnings for your holdings',on:true},
+        {l:'Recommendation updates',s:'When my view changes',on:true},
+        {l:'Dividend announcements',s:'Declared dividends',on:false},
+        {l:'Weekly summary',s:'Portfolio summary every Monday',on:false},
+      ].map(r=>`
+        <div class="s-row">
+          <div class="s-row-left"><div><div class="s-row-lbl">${r.l}</div><div class="s-row-sub">${r.s}</div></div></div>
+          <div class="toggle ${r.on?'on':''}" onclick="this.classList.toggle('on')"></div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Your Advisor</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Alex</div><div class="s-row-sub">Powered by claude-opus-4-8</div></div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:var(--gold);background:var(--gold-dim);padding:3px 9px;border-radius:999px">Active</span>
+      </div>
+      <div class="s-row clickable" onclick="App.closeAll()">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--surface3);color:var(--muted)">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Advisor Memory</div><div class="s-row-sub">Goals, risk profile, preferences, learned facts</div></div>
+        </div>
+        <div class="s-row-right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Account</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--sky-dim);color:var(--sky)">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Aly Coulibaly</div><div class="s-row-sub">alyc70755@gmail.com</div></div>
+        </div>
+      </div>
+      <div class="s-row clickable">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--red-dim);color:var(--red)">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </div>
+          <div class="s-row-lbl" style="color:var(--red)">Sign Out</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:6px 2px 4px;font-size:11px;color:var(--subtle);text-align:center;line-height:1.55">
+      Analysis only — AlyInvest never places trades, holds money, or moves assets. All recommendations are for informational purposes only and do not constitute financial advice.
+    </div>
+  `;
+};
+
+App.openSettings = function() {
+  document.getElementById('settings-panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+};
+
+App.closeAll = function() {
+  document.getElementById('notif-panel').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
+};
+
+// ─── KEYBOARD ────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') App.closeAll();
+  if (e.key === 'Enter' && document.activeElement.id === 'chat-input') App.send();
+});
+
+// ─── BOOT ────────────────────────────────────────────────
+App.boot = function() {
+  if (App.st.onboarded) {
+    document.getElementById('app').classList.remove('is-flow');
+    App.renderConvo();
+    App.renderNotifs();
+    App.renderSettings();
+  }
+  // else: stay on flow (welcome screen shown by default)
+};
+
+App.boot();
+
+})();
+</script>
+</body>
+</html>

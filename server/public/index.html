@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080c">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>AlyInvest AI</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#07080c;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;background:none;border:none;cursor:pointer;padding:0}
+input,textarea{font-family:inherit}
+
+:root{
+  --bg:#07080c;
+  --surface:#0f1116;
+  --surface2:#161820;
+  --surface3:#1d2030;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --text:#e8eaf0;
+  --muted:rgba(232,234,240,0.5);
+  --subtle:rgba(232,234,240,0.28);
+  --gold:#C7A867;
+  --gold-dim:rgba(199,168,103,0.13);
+  --gold-glow:rgba(199,168,103,0.07);
+  --sky:#6FA8DC;
+  --sky-dim:rgba(111,168,220,0.12);
+  --green:#4BAE8A;
+  --green-dim:rgba(75,174,138,0.12);
+  --red:#E05555;
+  --red-dim:rgba(224,85,85,0.12);
+  --amber:#E8A840;
+  --topbar-h:56px;
+  --r:12px;
+  --r-sm:8px;
+  --r-full:999px;
+}
+
+/* ── APP SHELL ── */
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+
+#flow{position:absolute;inset:0;z-index:100;background:var(--bg);display:none;align-items:center;justify-content:center}
+#app.is-flow #flow{display:flex;flex-direction:column}
+#app.is-flow #app-shell{display:none}
+
+#app-shell{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* ── TOPBAR ── */
+.topbar{
+  height:var(--topbar-h);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:rgba(7,8,12,0.96);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  position:relative;z-index:10
+}
+.topbar-brand{display:flex;align-items:center;gap:9px}
+.topbar-logomark{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,#a08038,var(--gold));
+  display:flex;align-items:center;justify-content:center
+}
+.topbar-logomark svg{width:15px;height:15px;fill:#07080c}
+.topbar-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+
+.topbar-center{
+  position:absolute;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px
+}
+.topbar-advisor{font-size:13px;font-weight:600;color:var(--text)}
+.topbar-online{font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px}
+.topbar-online::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;display:inline-block}
+
+.topbar-right{display:flex;align-items:center;gap:10px}
+.health-pill{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r-full);padding:5px 12px;cursor:pointer;transition:background .15s
+}
+.health-pill:hover{background:var(--surface3)}
+.health-score{font-size:13px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+.health-label{font-size:11px;color:var(--muted)}
+.bell-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;position:relative
+}
+.bell-btn:hover{background:var(--surface3)}
+.bell-btn svg{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:1.8}
+.bell-badge{
+  position:absolute;top:-3px;right:-3px;
+  width:16px;height:16px;
+  background:var(--gold);border:2px solid var(--bg);
+  border-radius:50%;font-size:9px;font-weight:700;color:#07080c;
+  display:flex;align-items:center;justify-content:center
+}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(111,168,220,.2),rgba(111,168,220,.08));
+  border:1px solid rgba(111,168,220,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--sky);cursor:pointer
+}
+
+/* ── PUSH BANNER ── */
+.push-banner{
+  display:none;align-items:center;gap:12px;
+  padding:11px 20px;background:var(--gold-dim);border-bottom:1px solid rgba(199,168,103,.2);
+  flex-shrink:0
+}
+.push-banner.show{display:flex}
+.push-banner svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2;flex-shrink:0}
+.push-banner-txt{flex:1;font-size:12.5px;color:var(--text)}
+.push-banner-btn{
+  font-size:12px;font-weight:700;color:#07080c;background:var(--gold);
+  padding:6px 13px;border-radius:var(--r-full);flex-shrink:0
+}
+.push-banner-dismiss{font-size:12px;color:var(--muted);flex-shrink:0;padding:6px}
+
+/* ── CONVERSATION ── */
+.conversation{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.messages{
+  flex:1;overflow-y:auto;
+  padding:20px 0 8px;
+  display:flex;flex-direction:column;
+  scroll-behavior:smooth
+}
+.messages::-webkit-scrollbar{width:3px}
+.messages::-webkit-scrollbar-track{background:transparent}
+.messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.day-sep{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 24px;
+  color:var(--subtle);font-size:11px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.8px
+}
+.day-sep::before,.day-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.msg{display:flex;gap:10px;padding:3px 24px}
+.msg.advisor{flex-direction:row}
+.msg.user{flex-direction:row-reverse}
+.msg+.msg.advisor{margin-top:2px}
+.msg+.msg.user{margin-top:2px}
+
+.msg-av{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;align-self:flex-end;margin-bottom:1px
+}
+.msg.advisor .msg-av{background:linear-gradient(135deg,#9a7830,var(--gold));color:#07080c}
+.msg.user .msg-av{background:linear-gradient(135deg,#162030,#1e2d42);border:1px solid rgba(111,168,220,.2);color:var(--sky)}
+
+.msg-bubble{
+  max-width:min(540px,72%);
+  padding:11px 15px;border-radius:18px;
+  font-size:14.5px;line-height:1.57;color:var(--text)
+}
+.msg.advisor .msg-bubble{
+  background:var(--surface2);border:1px solid var(--border);
+  border-bottom-left-radius:4px
+}
+.msg.user .msg-bubble{
+  background:#182030;border:1px solid rgba(111,168,220,.18);
+  border-bottom-right-radius:4px;color:#c4d4e8
+}
+
+/* inline cards */
+.msg-card{margin:4px 24px 4px 62px;max-width:min(420px,78%)}
+
+.card-alert{
+  background:var(--surface2);border:1px solid var(--border);
+  border-left:2px solid var(--gold);border-radius:var(--r);padding:14px 16px
+}
+.card-alert-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.card-alert-ico{
+  width:26px;height:26px;border-radius:6px;background:var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.card-alert-ico svg{width:13px;height:13px;stroke:var(--gold);fill:none;stroke-width:2}
+.card-alert-ico.crit{background:var(--red-dim)}
+.card-alert-ico.crit svg{stroke:var(--red)}
+.card-alert-title{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:.6px}
+.card-alert-rows{display:flex;flex-direction:column;gap:6px}
+.card-alert-row{display:flex;justify-content:space-between;align-items:center}
+.card-alert-lbl{font-size:13px;color:var(--muted)}
+.card-alert-val{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.val-bad{color:var(--red)}
+.val-warn{color:var(--amber)}
+
+.card-rec{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px
+}
+.card-rec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-rec-ticker{font-size:16px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.card-rec-action{font-size:11px;font-weight:700;padding:3px 10px;border-radius:var(--r-full)}
+.action-hold{background:rgba(232,168,64,.14);color:var(--amber)}
+.action-buy{background:var(--green-dim);color:var(--green)}
+.action-sell,.action-trim{background:var(--red-dim);color:var(--red)}
+.card-rec-qty{font-size:12px;color:var(--muted);margin-bottom:6px}
+.card-rec-reason{font-size:13px;color:var(--muted);line-height:1.45}
+.card-rec-conf{
+  display:flex;align-items:center;gap:8px;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--border)
+}
+.card-rec-conf-lbl{font-size:11px;color:var(--subtle)}
+.card-rec-conf-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.card-rec-conf-fill{height:100%;background:var(--gold);border-radius:2px}
+.card-rec-conf-pct{font-size:11px;font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums}
+
+.card-opp{
+  background:var(--surface2);border:1px solid rgba(75,174,138,.25);
+  border-radius:var(--r);padding:14px 16px
+}
+.card-opp-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.card-opp-ticker{font-size:15px;font-weight:700;color:var(--text)}
+.card-opp-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:var(--r-full);background:var(--green-dim);color:var(--green)}
+.card-opp-body{font-size:13px;color:var(--muted);line-height:1.45}
+
+/* typing */
+.typing-dots{display:flex;gap:5px;align-items:center;padding:13px 16px}
+.typing-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--muted);
+  animation:tdot 1.2s ease-in-out infinite
+}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+
+/* suggestions */
+.suggestions{
+  display:flex;gap:7px;padding:8px 24px 2px;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0
+}
+.suggestions::-webkit-scrollbar{display:none}
+.sug-chip{
+  flex-shrink:0;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r-full);padding:7px 14px;
+  font-size:12.5px;color:var(--muted);cursor:pointer;
+  white-space:nowrap;transition:all .15s
+}
+.sug-chip:hover{background:var(--surface3);border-color:rgba(199,168,103,.35);color:var(--text)}
+
+/* input bar */
+.input-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px 14px;
+  background:var(--bg);border-top:1px solid var(--border);
+  flex-shrink:0
+}
+.chat-input{
+  flex:1;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r-full);
+  padding:11px 18px;font-size:14px;color:var(--text);
+  outline:none;transition:border-color .15s
+}
+.chat-input:focus{border-color:rgba(199,168,103,.35)}
+.chat-input::placeholder{color:var(--subtle)}
+.send-btn{
+  width:40px;height:40px;border-radius:50%;
+  background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s
+}
+.send-btn:hover{background:#d4b472;transform:scale(1.06)}
+.send-btn:active{transform:scale(.94)}
+.send-btn svg{width:15px;height:15px;fill:#07080c}
+.send-btn.disabled{opacity:.4;pointer-events:none}
+
+/* ── PANELS ── */
+.backdrop{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  z-index:45;opacity:0;pointer-events:none;transition:opacity .22s
+}
+.backdrop.show{opacity:1;pointer-events:all}
+
+.panel{
+  position:absolute;top:0;right:0;bottom:0;width:360px;
+  background:var(--surface);border-left:1px solid var(--border);
+  z-index:50;display:flex;flex-direction:column;
+  transform:translateX(102%);transition:transform .24s cubic-bezier(.4,0,.2,1)
+}
+.panel.open{transform:translateX(0)}
+.panel-hd{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0
+}
+.panel-title{font-size:16px;font-weight:600;color:var(--text)}
+.panel-close{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer
+}
+.panel-close svg{width:11px;height:11px;stroke:var(--muted);fill:none;stroke-width:2.2}
+
+/* notif panel */
+#notif-list{
+  flex:1;overflow-y:auto;padding:12px;
+  display:flex;flex-direction:column;gap:8px
+}
+#notif-list::-webkit-scrollbar{width:3px}
+#notif-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.notif-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px;cursor:pointer;transition:background .15s
+}
+.notif-item:hover{background:var(--surface3)}
+.notif-item.unread{border-left:2px solid var(--gold)}
+.notif-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.notif-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.notif-time{font-size:11px;color:var(--subtle);flex-shrink:0;padding-top:1px}
+.notif-body{font-size:12px;color:var(--muted);line-height:1.45}
+.ntag{
+  display:inline-block;font-size:10px;font-weight:600;
+  padding:2px 7px;border-radius:var(--r-full);margin-bottom:5px
+}
+.ntag-alert{background:var(--red-dim);color:var(--red)}
+.ntag-update{background:var(--gold-dim);color:var(--gold)}
+.ntag-opportunity{background:var(--green-dim);color:var(--green)}
+.notif-empty{padding:40px 20px;text-align:center;color:var(--subtle);font-size:13px;line-height:1.6}
+
+/* settings panel */
+#settings-body{
+  flex:1;overflow-y:auto;padding:16px;
+  display:flex;flex-direction:column;gap:20px
+}
+#settings-body::-webkit-scrollbar{width:3px}
+#settings-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.s-section{display:flex;flex-direction:column;gap:7px}
+.s-section-title{font-size:11px;font-weight:600;color:var(--subtle);text-transform:uppercase;letter-spacing:.7px;padding:0 2px}
+.s-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);
+  transition:background .15s
+}
+.s-row.clickable{cursor:pointer}
+.s-row.clickable:hover{background:var(--surface3)}
+.s-row-left{display:flex;align-items:center;gap:10px}
+.s-row-ico{
+  width:30px;height:30px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.s-row-ico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.s-row-lbl{font-size:13.5px;color:var(--text)}
+.s-row-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.s-row-right{display:flex;align-items:center;gap:6px}
+.s-row-right svg{width:13px;height:13px;stroke:var(--subtle);fill:none;stroke-width:2}
+.toggle{
+  width:36px;height:20px;background:var(--surface3);border-radius:10px;
+  position:relative;cursor:pointer;border:1px solid var(--border2);transition:background .2s;flex-shrink:0
+}
+.toggle.on{background:var(--gold);border-color:var(--gold)}
+.toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:14px;height:14px;border-radius:50%;background:white;transition:transform .2s
+}
+.toggle.on::after{transform:translateX(16px)}
+
+.port-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px
+}
+.port-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.port-val{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.port-lbl{font-size:11px;color:var(--muted);margin-top:2px}
+.port-badge{font-size:11px;font-weight:600;background:var(--green-dim);color:var(--green);padding:3px 9px;border-radius:var(--r-full)}
+.port-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.port-stat-lbl{font-size:11px;color:var(--muted)}
+.port-stat-val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px;font-variant-numeric:tabular-nums}
+
+.mini-btn{
+  font-size:12px;font-weight:600;color:var(--gold);background:var(--gold-dim);
+  border:1px solid rgba(199,168,103,.25);border-radius:var(--r-sm);
+  padding:9px 12px;text-align:center;transition:background .15s
+}
+.mini-btn:hover{background:rgba(199,168,103,.22)}
+.mini-btn:disabled{opacity:.5;pointer-events:none}
+.mini-btn-row{display:flex;gap:8px}
+.mini-btn-row .mini-btn{flex:1}
+
+/* ── FLOW SCREENS ── */
+#flow{overflow-y:auto}
+.flow-wrap{width:100%;max-width:440px;padding:40px 24px;margin:auto;display:flex;flex-direction:column}
+
+.flow-screen{display:none;flex-direction:column}
+.flow-screen.active{display:flex}
+
+/* welcome */
+.wlc-logo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:44px}
+.wlc-mark{
+  width:70px;height:70px;border-radius:18px;
+  background:linear-gradient(145deg,#9a7830,var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(199,168,103,.2),0 8px 32px rgba(199,168,103,.15)
+}
+.wlc-mark svg{width:34px;height:34px;fill:#07080c}
+.wlc-tagline{font-size:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.wlc-h{font-size:27px;font-weight:700;color:var(--text);text-align:center;line-height:1.2;letter-spacing:-.4px;margin-bottom:10px}
+.wlc-sub{font-size:15px;color:var(--muted);text-align:center;line-height:1.55;margin-bottom:36px}
+.auth-btns{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.auth-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:14px 20px;border-radius:var(--r);
+  font-size:14.5px;font-weight:600;transition:all .15s;border:none
+}
+.auth-btn svg{width:18px;height:18px}
+.auth-apple{background:var(--text);color:#07080c}
+.auth-apple:hover{background:#c8cad0}
+.auth-google{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.auth-google:hover{background:var(--surface3)}
+.auth-email{background:transparent;color:var(--gold);border:1px solid rgba(199,168,103,.28)}
+.auth-email:hover{background:var(--gold-glow)}
+.auth-or{text-align:center;font-size:11px;color:var(--subtle);margin:2px 0}
+.legal{font-size:11px;color:var(--subtle);text-align:center;line-height:1.5}
+.legal a{color:var(--muted);text-decoration:underline;cursor:pointer}
+
+/* intro */
+.intro-av{
+  width:78px;height:78px;border-radius:50%;
+  background:linear-gradient(145deg,#9a7830,var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;color:#07080c;
+  margin:0 auto 20px;
+  box-shadow:0 0 0 6px rgba(199,168,103,.1),0 0 0 12px rgba(199,168,103,.05)
+}
+.intro-label{font-size:12px;font-weight:600;color:var(--gold);text-align:center;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px}
+.intro-bubble{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:18px;border-top-left-radius:4px;
+  padding:18px 20px;font-size:15px;color:var(--text);line-height:1.6;
+  margin-bottom:24px
+}
+.intro-bubble p+p{margin-top:12px}
+
+/* flow buttons */
+.flow-btn{
+  background:var(--gold);color:#07080c;border:none;
+  border-radius:var(--r);padding:14px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:all .15s;width:100%
+}
+.flow-btn:hover{background:#d4b472}
+.flow-btn-ghost{
+  background:transparent;color:var(--muted);
+  border:1px solid var(--border2);border-radius:var(--r);
+  padding:12px;font-size:14px;font-weight:500;cursor:pointer;
+  font-family:inherit;transition:all .15s;width:100%;margin-top:8px
+}
+.flow-btn-ghost:hover{background:var(--surface2);color:var(--text)}
+
+/* onboarding */
+.ob-progress{display:flex;gap:5px;margin-bottom:30px}
+.ob-dot{height:3px;flex:1;border-radius:2px;background:var(--border2);transition:background .25s}
+.ob-dot.done{background:var(--gold)}
+.ob-dot.cur{background:rgba(199,168,103,.45)}
+.ob-q{font-size:21px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:8px;letter-spacing:-.3px}
+.ob-sub{font-size:14px;color:var(--muted);margin-bottom:26px;line-height:1.45}
+.ob-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.ob-opt{
+  padding:13px 15px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r);
+  font-size:14px;color:var(--text);cursor:pointer;
+  transition:all .15s;text-align:left;font-family:inherit
+}
+.ob-opt:hover{background:var(--surface3);border-color:rgba(199,168,103,.28)}
+.ob-opt.sel{background:var(--gold-dim);border-color:var(--gold)}
+.ob-opt-desc{font-size:11.5px;color:var(--muted);display:block;margin-top:3px}
+.ob-text{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:13px 15px;font-size:14px;color:var(--text);
+  outline:none;resize:none;transition:border-color .15s;margin-bottom:20px
+}
+.ob-text:focus{border-color:rgba(199,168,103,.35)}
+.ob-text::placeholder{color:var(--subtle)}
+
+/* connect */
+.connect-readonly{
+  background:linear-gradient(135deg,rgba(199,168,103,.07),rgba(199,168,103,.03));
+  border:1px solid rgba(199,168,103,.18);border-radius:var(--r);
+  padding:14px 15px;margin-bottom:20px;display:flex;gap:12px
+}
+.connect-readonly svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:2;flex-shrink:0;margin-top:1px}
+.connect-ro-txt{font-size:13px;color:var(--muted);line-height:1.5}
+.connect-ro-txt strong{color:var(--gold)}
+.broker-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.broker-opt{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 15px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--r);
+  cursor:pointer;transition:all .15s;text-align:left
+}
+.broker-opt:hover{background:var(--surface3);border-color:rgba(199,168,103,.28)}
+.broker-opt.sel{background:var(--gold-dim);border-color:var(--gold)}
+.broker-ico{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.b-212{background:#1a3a5e;color:var(--sky)}
+.b-ibkr{background:#2a1a0e;color:var(--amber)}
+.b-rh{background:#1a3a1a;color:var(--green)}
+.b-csv,.b-manual{background:var(--surface3);color:var(--muted)}
+.b-csv svg,.b-manual svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.broker-name{font-size:14px;font-weight:600;color:var(--text)}
+.broker-sub{font-size:11px;color:var(--muted)}
+
+/* ── ANIMATIONS ── */
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg-in{animation:msgIn .22s ease-out forwards}
+</style>
+</head>
+<body>
+<div id="app" class="is-flow">
+
+  <!-- ════════ FLOW ════════ -->
+  <div id="flow">
+    <div class="flow-wrap">
+
+      <!-- WELCOME -->
+      <div class="flow-screen active" data-screen="welcome">
+        <div class="wlc-logo">
+          <div class="wlc-mark">
+            <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
+          </div>
+          <span class="wlc-tagline">Your personal investment advisor</span>
+        </div>
+        <h1 class="wlc-h">Smarter investing starts with a conversation.</h1>
+        <p class="wlc-sub">AlyInvest is your personal AI wealth advisor — not a trading platform. It analyzes your portfolio and gives you expert, personalized guidance.</p>
+        <div class="auth-btns">
+          <button class="auth-btn auth-apple" onclick="App.auth('apple')">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            Continue with Apple
+          </button>
+          <button class="auth-btn auth-google" onclick="App.auth('google')">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+          <div class="auth-or">or</div>
+          <button class="auth-btn auth-email" onclick="App.auth('email')">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+            Continue with Email
+          </button>
+        </div>
+        <p class="legal">By continuing you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>.<br>AlyInvest never executes trades or holds your money.</p>
+      </div>
+
+      <!-- EMAIL SIGNUP -->
+      <div class="flow-screen" data-screen="signup">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Create account</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px">Welcome to AlyInvest.</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:28px">Your data is encrypted and never shared.</div>
+        <input type="text" class="ob-text" placeholder="Full name" style="margin-bottom:10px" id="su-name">
+        <input type="email" class="ob-text" placeholder="Email address" style="margin-bottom:10px" id="su-email">
+        <input type="password" class="ob-text" placeholder="Password" style="margin-bottom:20px" id="su-pwd">
+        <button class="flow-btn" onclick="App.auth('email-done')">Create Account</button>
+        <button class="flow-btn-ghost" onclick="App.showFlow('welcome')">Back</button>
+      </div>
+
+      <!-- ADVISOR INTRO -->
+      <div class="flow-screen" data-screen="intro">
+        <div class="intro-av">A</div>
+        <div class="intro-label">Alex · Your Advisor</div>
+        <div class="intro-bubble">
+          <p>Hi, I'm Alex — your personal investment advisor.</p>
+          <p>I'll analyze your portfolio, explain every recommendation in plain language, and remember everything we discuss. Over time, I'll understand your goals better than any algorithm.</p>
+          <p>Before we begin, I'd like to ask you a few questions so I can personalize everything for you.</p>
+        </div>
+        <button class="flow-btn" onclick="App.startOb()">Let's begin</button>
+        <button class="flow-btn-ghost" onclick="App.showFlow('welcome')">Go back</button>
+      </div>
+
+      <!-- ONBOARDING steps injected by JS -->
+      <div id="ob-steps"></div>
+
+      <!-- CONNECT PORTFOLIO -->
+      <div class="flow-screen" data-screen="connect">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Final step</div>
+        <div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px">Connect your portfolio</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:20px">I need to see your holdings to give you accurate advice.</div>
+        <div class="connect-readonly">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div class="connect-ro-txt"><strong>Read-only access, always.</strong> AlyInvest never executes trades, never holds money, and never moves assets. We only read your portfolio data to provide analysis.</div>
+        </div>
+        <div class="broker-list">
+          <button class="broker-opt" onclick="App.pickBroker(this,'t212')">
+            <div class="broker-ico b-212">212</div>
+            <div><div class="broker-name">Trading 212</div><div class="broker-sub">Connect via secure OAuth</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'ibkr')">
+            <div class="broker-ico b-ibkr">IB</div>
+            <div><div class="broker-name">Interactive Brokers</div><div class="broker-sub">Connect via secure OAuth</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'rh')">
+            <div class="broker-ico b-rh">RH</div>
+            <div><div class="broker-name">Robinhood</div><div class="broker-sub">Connect via secure OAuth</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'csv')">
+            <div class="broker-ico b-csv"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div><div class="broker-name">CSV Import</div><div class="broker-sub">Upload a spreadsheet export</div></div>
+          </button>
+          <button class="broker-opt" onclick="App.pickBroker(this,'manual')">
+            <div class="broker-ico b-manual"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+            <div><div class="broker-name">Manual Entry</div><div class="broker-sub">Enter holdings manually</div></div>
+          </button>
+        </div>
+        <button class="flow-btn" id="connect-btn" style="opacity:.38;pointer-events:none" onclick="App.doConnect()">Connect Portfolio</button>
+        <button class="flow-btn-ghost" onclick="App.showFlow('ob-' + (App.OB.length-1))">Back</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════ APP SHELL ════════ -->
+  <div id="app-shell">
+    <div class="topbar">
+      <div class="topbar-brand">
+        <div class="topbar-logomark">
+          <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
+        </div>
+        <span class="topbar-name">AlyInvest</span>
+      </div>
+      <div class="topbar-center">
+        <span class="topbar-advisor">Your Advisor · Alex</span>
+        <span class="topbar-online">Active now</span>
+      </div>
+      <div class="topbar-right">
+        <div class="health-pill" onclick="App.openSettings()">
+          <span class="health-score" id="health-score">—</span>
+          <span class="health-label">Portfolio Health</span>
+        </div>
+        <div class="bell-btn" onclick="App.openNotifs()">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="bell-badge" id="bell-badge" style="display:none">0</span>
+        </div>
+        <div class="avatar" onclick="App.openSettings()">AC</div>
+      </div>
+    </div>
+
+    <div class="push-banner" id="push-banner">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="push-banner-txt">Get buy/hold/sell alerts and risk warnings pushed to this device.</span>
+      <button class="push-banner-btn" onclick="App.enablePush()">Enable</button>
+      <button class="push-banner-dismiss" onclick="App.dismissPushBanner()">Not now</button>
+    </div>
+
+    <div class="conversation">
+      <div class="messages" id="messages"></div>
+      <div class="suggestions" id="suggestions"></div>
+      <div class="input-bar">
+        <input class="chat-input" id="chat-input" placeholder="Ask your advisor anything…" autocomplete="off">
+        <button class="send-btn" id="send-btn" onclick="App.send()">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ PANELS ════════ -->
+  <div class="backdrop" id="backdrop" onclick="App.closeAll()"></div>
+
+  <div class="panel" id="notif-panel">
+    <div class="panel-hd">
+      <span class="panel-title">Notifications</span>
+      <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+    </div>
+    <div id="notif-list"></div>
+  </div>
+
+  <div class="panel" id="settings-panel">
+    <div class="panel-hd">
+      <span class="panel-title">Portfolio &amp; Settings</span>
+      <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+    </div>
+    <div id="settings-body"></div>
+  </div>
+
+</div>
+<script>
+(function(){
+'use strict';
+
+const OB_QS = [
+  {q:"How would you describe your investment experience?",sub:"This helps me calibrate how I explain things to you.",opts:[
+    {l:"Just getting started",d:"I'm learning the basics"},
+    {l:"Some experience",d:"A few years of investing"},
+    {l:"Experienced investor",d:"I've been investing for 5+ years"},
+    {l:"Professional background",d:"I work in finance or have deep knowledge"},
+  ]},
+  {q:"What is your primary investment goal?",sub:"I'll personalize every recommendation around this.",opts:[
+    {l:"Long-term wealth building",d:"Grow over 10+ years"},
+    {l:"Retirement planning",d:"Building a retirement nest egg"},
+    {l:"Passive income",d:"Dividends and regular cash flow"},
+    {l:"Capital preservation",d:"Protecting what I have"},
+  ]},
+  {q:"How do you feel about investment risk?",sub:"There's no wrong answer — this shapes your strategy.",opts:[
+    {l:"Conservative",d:"Stability over higher returns"},
+    {l:"Moderately conservative",d:"Mostly stable, some growth"},
+    {l:"Moderate",d:"Balanced approach"},
+    {l:"Moderately aggressive",d:"Growth-focused, comfortable with volatility"},
+    {l:"Aggressive",d:"Maximum growth, can handle large swings"},
+  ]},
+  {q:"What is your investment time horizon?",sub:"How long before you'd need to access these funds?",opts:[
+    {l:"Less than 3 years",d:"Short-term needs"},
+    {l:"3 to 7 years",d:"Medium-term goals"},
+    {l:"7 to 15 years",d:"Long-term growth"},
+    {l:"15+ years",d:"Very long horizon, maximum compounding"},
+  ]},
+  {q:"How much do you invest each month?",sub:"Approximately — this helps me size recommendations.",opts:[
+    {l:"Less than $500"},{l:"$500 – $1,500"},{l:"$1,500 – $5,000"},{l:"More than $5,000"}
+  ]},
+  {q:"Which sectors interest you most?",sub:"I'll focus my analysis on your areas of interest.",multi:true,opts:[
+    {l:"Technology"},{l:"Healthcare"},{l:"Consumer Goods"},{l:"Financials"},
+    {l:"Energy"},{l:"Real Estate"},{l:"International"},{l:"ETFs / Index Funds"},
+  ]},
+  {q:"What matters most in a recommendation?",sub:"This shapes how I prioritize advice.",opts:[
+    {l:"Risk-adjusted return",d:"Best return for the risk taken"},
+    {l:"Dividend income",d:"Regular cash flow from investments"},
+    {l:"Long-term appreciation",d:"Compounding growth over time"},
+    {l:"Portfolio diversification",d:"Spreading risk across asset classes"},
+  ]},
+  {q:"Tell me about your current portfolio.",sub:"Any existing investments, accounts, or notable holdings?",text:true,ph:"e.g. \"About $80k mostly in US tech stocks and some index funds\""},
+];
+
+const App = window.App = {};
+App.OB = OB_QS;
+
+App.st = { onboarded:false, obAnswers:{}, broker:null, pushEnabled:false };
+App.chatHistory = []; // [{role,content}] sent to /api/chat for context
+App.portfolioView = null;
+App.notifs = [];
+
+// ─── FLOW ────────────────────────────────────────────────
+App.showFlow = function(id) {
+  document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+  const el = document.querySelector('[data-screen="' + id + '"]');
+  if (el) el.classList.add('active');
+  document.getElementById('flow').scrollTop = 0;
+};
+
+App.auth = function(m) {
+  if (m === 'email') { App.showFlow('signup'); }
+  else { App.showFlow('intro'); }
+};
+
+App.startOb = function() {
+  App.buildOb();
+  App.showFlow('ob-0');
+};
+
+App.buildOb = function() {
+  const host = document.getElementById('ob-steps');
+  if (host.childElementCount > 0) return;
+  host.innerHTML = OB_QS.map((q, i) => `
+    <div class="flow-screen" data-screen="ob-${i}">
+      <div class="ob-progress">
+        ${OB_QS.map((_,j) => `<div class="ob-dot ${j<i?'done':j===i?'cur':''}"></div>`).join('')}
+      </div>
+      <div class="ob-q">${q.q}</div>
+      ${q.sub ? `<div class="ob-sub">${q.sub}</div>` : ''}
+      ${q.text ? `
+        <textarea class="ob-text" id="ob-txt-${i}" rows="3" placeholder="${q.ph||''}"></textarea>
+        <button class="flow-btn" onclick="App.obNext(${i})">Continue</button>
+      ` : `
+        <div class="ob-opts" id="ob-opts-${i}">
+          ${q.opts.map((o,oi) => `
+            <button class="ob-opt" data-step="${i}" data-oi="${oi}" onclick="App.obPick(this,${i},${!!q.multi})">
+              ${o.l}${o.d ? `<span class="ob-option-desc">${o.d}</span>` : ''}
+            </button>
+          `).join('')}
+        </div>
+        ${q.multi ? `<button class="flow-btn" id="ob-cont-${i}" style="display:none;margin-top:4px" onclick="App.obNext(${i})">Continue</button>` : ''}
+      `}
+      ${i > 0 ? `<button class="flow-btn-ghost" onclick="App.obBack(${i})">Back</button>` : ''}
+    </div>
+  `).join('');
+};
+
+App.obPick = function(el, step, multi) {
+  if (multi) {
+    el.classList.toggle('sel');
+    const any = document.querySelectorAll('#ob-opts-' + step + ' .ob-opt.sel').length > 0;
+    const btn = document.getElementById('ob-cont-' + step);
+    if (btn) btn.style.display = any ? 'block' : 'none';
+    App.st.obAnswers[step] = [...document.querySelectorAll('#ob-opts-' + step + ' .ob-opt.sel')].map(b => b.childNodes[0].textContent.trim());
+  } else {
+    document.querySelectorAll('#ob-opts-' + step + ' .ob-opt').forEach(b => b.classList.remove('sel'));
+    el.classList.add('sel');
+    App.st.obAnswers[step] = el.childNodes[0].textContent.trim();
+    setTimeout(() => App.obNext(step), 200);
+  }
+};
+
+App.obNext = function(i) {
+  if (i + 1 < OB_QS.length) { App.showFlow('ob-' + (i+1)); }
+  else { App.showFlow('connect'); }
+};
+
+App.obBack = function(i) {
+  if (i <= 0) { App.showFlow('intro'); }
+  else { App.showFlow('ob-' + (i-1)); }
+};
+
+App.pickBroker = function(el, broker) {
+  document.querySelectorAll('.broker-opt').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  App.st.broker = broker;
+  const btn = document.getElementById('connect-btn');
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'all';
+};
+
+App.doConnect = function() {
+  const btn = document.getElementById('connect-btn');
+  btn.textContent = 'Connecting…';
+  btn.style.opacity = '.65';
+  btn.style.pointerEvents = 'none';
+  setTimeout(App.enterApp, 1200);
+};
+
+// ─── ENTER APP ──────────────────────────────────────────
+App.enterApp = async function() {
+  App.st.onboarded = true;
+  document.getElementById('app').classList.remove('is-flow');
+  await App.loadAll();
+  if (Notification && Notification.permission === 'default') {
+    document.getElementById('push-banner').classList.add('show');
+  }
+};
+
+App.loadAll = async function() {
+  const [portfolio, notifs, latest] = await Promise.all([
+    fetch('/api/portfolio').then(r => r.json()),
+    fetch('/api/notifications').then(r => r.json()),
+    fetch('/api/analysis/latest').then(r => r.json()),
+  ]);
+  App.portfolioView = portfolio;
+  App.notifs = notifs;
+  App.latestAnalysis = latest;
+  document.getElementById('health-score').textContent = latest ? latest.portfolioHealthScore : '—';
+  App.renderConvo(latest);
+  App.renderNotifs();
+  App.renderSettings();
+};
+
+// ─── CONVERSATION ────────────────────────────────────────
+function $m(html) {
+  const msgs = document.getElementById('messages');
+  msgs.insertAdjacentHTML('beforeend', html);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function bubbleA(text) {
+  return `<div class="msg advisor msg-in"><div class="msg-av">A</div><div class="msg-bubble">${esc(text).replace(/\n/g,'<br>')}</div></div>`;
+}
+function bubbleU(text) {
+  return `<div class="msg user msg-in"><div class="msg-av">AC</div><div class="msg-bubble">${esc(text)}</div></div>`;
+}
+function cardAlert(a) {
+  const crit = a.severity === 'critical';
+  return `<div class="msg-card">
+    <div class="card-alert">
+      <div class="card-alert-hd">
+        <div class="card-alert-ico ${crit?'crit':''}"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="card-alert-title">${esc(a.title)}</span>
+      </div>
+      <div class="card-rec-reason">${esc(a.body)}</div>
+    </div>
+  </div>`;
+}
+function cardRec(r) {
+  const al = (r.action||'hold').toUpperCase();
+  return `<div class="msg-card">
+    <div class="card-rec">
+      <div class="card-rec-hd"><span class="card-rec-ticker">${esc(r.ticker)}</span><span class="card-rec-action action-${r.action}">${al}</span></div>
+      ${r.quantity ? `<div class="card-rec-qty">${r.quantity} shares${r.estPrice ? ' · ~$'+r.estPrice : ''}</div>` : ''}
+      <div class="card-rec-reason">${esc(r.rationale)}</div>
+      <div class="card-rec-conf">
+        <span class="card-rec-conf-lbl">Confidence</span>
+        <div class="card-rec-conf-bar"><div class="card-rec-conf-fill" style="width:${r.confidence}%"></div></div>
+        <span class="card-rec-conf-pct">${r.confidence}%</span>
+      </div>
+    </div>
+  </div>`;
+}
+function cardOpp(o) {
+  return `<div class="msg-card">
+    <div class="card-opp">
+      <div class="card-opp-hd"><span class="card-opp-ticker">${esc(o.ticker)}${o.name?' · '+esc(o.name):''}</span><span class="card-opp-tag">Opportunity</span></div>
+      ${o.quantity ? `<div class="card-rec-qty">Suggested: buy ${o.quantity} shares${o.estPrice?' · ~$'+o.estPrice:''}</div>` : ''}
+      <div class="card-opp-body">${esc(o.rationale)}</div>
+    </div>
+  </div>`;
+}
+function daySep(label) { return `<div class="day-sep">${label}</div>`; }
+
+App.renderConvo = function(latest) {
+  const msgs = document.getElementById('messages');
+  let html = '';
+  html += bubbleA("Hi Aly. I'm watching your portfolio around the clock — I'll run a full review every 24 hours and flag anything material the moment it happens. Ask me anything in the meantime.");
+
+  if (latest) {
+    html += daySep(new Date(latest.ranAt).toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric'}));
+    html += bubbleA(latest.advisorMessage);
+    (latest.alerts||[]).forEach(a => html += cardAlert(a));
+    (latest.recommendations||[]).filter(r=>r.action!=='hold').forEach(r => html += cardRec(r));
+    (latest.opportunities||[]).forEach(o => html += cardOpp(o));
+  } else {
+    html += bubbleA("I haven't run my first review yet. Tap \"Run analysis now\" below (or in Settings) and I'll analyze your holdings against today's market and give you real recommendations.");
+  }
+
+  msgs.innerHTML = html;
+  msgs.scrollTop = msgs.scrollHeight;
+  renderSuggestions(!latest);
+};
+
+function renderSuggestions(needsFirstRun) {
+  const chips = needsFirstRun
+    ? ['Run analysis now','Should I rebalance?','Explain my risk','Show my holdings']
+    : ['Should I rebalance?','Explain my risk','What changed today?','Should I buy NVDA?','Show my holdings','Best sectors now?'];
+  document.getElementById('suggestions').innerHTML = chips.map(c =>
+    `<div class="sug-chip" onclick="App.suggest('${c.replace(/'/g,"\\'")}')">${c}</div>`
+  ).join('');
+}
+
+App.suggest = function(txt) {
+  if (txt === 'Run analysis now') { App.runAnalysis(); return; }
+  document.getElementById('chat-input').value = txt;
+  App.send();
+};
+
+App.send = async function() {
+  const inp = document.getElementById('chat-input');
+  const btn = document.getElementById('send-btn');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+  btn.classList.add('disabled');
+  $m(bubbleU(txt));
+  showTyping();
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ message: txt, history: App.chatHistory.slice(-10) }),
+    });
+    const data = await res.json();
+    hideTyping();
+    const reply = data.reply || "I couldn't reach the market data right now — try again in a moment.";
+    $m(bubbleA(reply));
+    App.chatHistory.push({role:'user', content:txt});
+    App.chatHistory.push({role:'assistant', content:reply});
+  } catch (err) {
+    hideTyping();
+    $m(bubbleA("I'm having trouble connecting right now. Please try again."));
+  } finally {
+    btn.classList.remove('disabled');
+  }
+};
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  msgs.insertAdjacentHTML('beforeend', `<div id="typing-row" class="msg advisor"><div class="msg-av">A</div><div class="msg-bubble" style="padding:0"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function hideTyping() {
+  const t = document.getElementById('typing-row');
+  if (t) t.remove();
+}
+
+App.runAnalysis = async function() {
+  $m(bubbleA('Running a full review of your portfolio against today\'s market now — one moment.'));
+  showTyping();
+  try {
+    const res = await fetch('/api/analysis/run', { method:'POST' });
+    const entry = await res.json();
+    hideTyping();
+    document.getElementById('messages').insertAdjacentHTML('beforeend',
+      daySep('Just now') +
+      bubbleA(entry.advisorMessage) +
+      (entry.alerts||[]).map(cardAlert).join('') +
+      (entry.recommendations||[]).filter(r=>r.action!=='hold').map(cardRec).join('') +
+      (entry.opportunities||[]).map(cardOpp).join('')
+    );
+    document.getElementById('messages').scrollTop = 999999;
+    renderSuggestions(false);
+    App.loadAll();
+  } catch (err) {
+    hideTyping();
+    $m(bubbleA('The analysis failed to run — check that the server has a valid API key configured.'));
+  }
+};
+
+App.runRiskCheck = async function() {
+  const btn = event ? event.target : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  try {
+    const res = await fetch('/api/risk-check', { method:'POST' });
+    const entry = await res.json();
+    if (entry.riskDetected) {
+      document.getElementById('messages').insertAdjacentHTML('beforeend', (entry.alerts||[]).map(cardAlert).join(''));
+      document.getElementById('messages').scrollTop = 999999;
+      App.loadAll();
+    }
+    if (btn) { btn.textContent = entry.riskDetected ? 'Risk found — see conversation' : 'No risk detected'; }
+  } catch (err) {
+    if (btn) btn.textContent = 'Check failed';
+  } finally {
+    if (btn) setTimeout(() => { btn.disabled = false; btn.textContent = 'Check for risk now'; }, 2400);
+  }
+};
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+App.dismissPushBanner = function() {
+  document.getElementById('push-banner').classList.remove('show');
+};
+
+App.enablePush = async function() {
+  document.getElementById('push-banner').classList.remove('show');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Push notifications are not supported in this browser.');
+    return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const { publicKey } = await fetch('/api/vapid-public-key').then(r => r.json());
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    await fetch('/api/subscribe', {
+      method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(sub),
+    });
+    App.st.pushEnabled = true;
+    App.renderSettings();
+  } catch (err) {
+    console.error('push setup failed', err);
+  }
+};
+
+// ─── NOTIFICATIONS PANEL ─────────────────────────────────
+App.renderNotifs = function() {
+  const badge = document.getElementById('bell-badge');
+  const unread = App.notifs.filter(n => n.unread).length;
+  badge.style.display = unread ? 'flex' : 'none';
+  badge.textContent = unread;
+
+  if (!App.notifs.length) {
+    document.getElementById('notif-list').innerHTML = `<div class="notif-empty">No notifications yet.<br>Your advisor will alert you here the moment something meaningful changes.</div>`;
+    return;
+  }
+  document.getElementById('notif-list').innerHTML = App.notifs.map(n => `
+    <div class="notif-item ${n.unread?'unread':''}" onclick="App.notifTap(${n.id})">
+      <div class="notif-hd">
+        <div><span class="ntag ntag-${n.tag}">${n.tag}</span><div class="notif-title">${esc(n.title)}</div></div>
+        <span class="notif-time">${timeAgo(n.time)}</span>
+      </div>
+      <div class="notif-body">${esc(n.body)}</div>
+    </div>
+  `).join('');
+};
+
+function timeAgo(iso) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+App.notifTap = async function(id) {
+  const n = App.notifs.find(x => x.id === id);
+  if (!n) return;
+  n.unread = false;
+  App.renderNotifs();
+  App.closeAll();
+  await fetch('/api/notifications/' + id + '/read', { method:'POST' });
+  $m(bubbleU(n.title));
+  showTyping();
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ message: `Tell me more about this: "${n.title}" — ${n.body}`, history: App.chatHistory.slice(-10) }),
+    });
+    const data = await res.json();
+    hideTyping();
+    $m(bubbleA(data.reply));
+  } catch (e) { hideTyping(); }
+};
+
+App.openNotifs = function() {
+  document.getElementById('notif-panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+};
+
+// ─── SETTINGS ────────────────────────────────────────────
+App.renderSettings = function() {
+  const p = App.portfolioView;
+  if (!p) return;
+  const $ = (n,d=0) => Number(n).toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:d,maximumFractionDigits:d});
+  document.getElementById('health-score').textContent = p.health ?? '—';
+
+  document.getElementById('settings-body').innerHTML = `
+    <div class="port-card">
+      <div class="port-card-top">
+        <div><div class="port-val">${$(p.total)}</div><div class="port-lbl">Total portfolio value</div></div>
+      </div>
+      <div class="port-stats">
+        <div><div class="port-stat-lbl">Cash available</div><div class="port-stat-val">${$(p.cash)}</div></div>
+        <div><div class="port-stat-lbl">Risk profile</div><div class="port-stat-val">${p.user.riskProfile}</div></div>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Holdings</div>
+      ${p.holdings.map(h => `
+        <div class="s-row">
+          <div class="s-row-left">
+            <div class="s-row-ico" style="background:var(--surface3);color:var(--muted)">
+              <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <div>
+              <div class="s-row-lbl">${h.ticker} <span style="font-weight:400;color:var(--muted);font-size:12px">· ${h.name}</span></div>
+              <div class="s-row-sub">${h.shares} sh · ${h.weightPct}% of portfolio</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">${$(h.value)}</div>
+            <div style="font-size:11px;color:${h.gainPct>=0?'var(--green)':'var(--red)'}">${h.gainPct>=0?'+':''}${h.gainPct}%</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Advisor Engine</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Alex</div><div class="s-row-sub">Powered by claude-opus-4-8 · reviews every 24h, risk scan every 2h</div></div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:var(--gold);background:var(--gold-dim);padding:3px 9px;border-radius:999px">Live</span>
+      </div>
+      <div class="mini-btn-row">
+        <button class="mini-btn" onclick="App.runAnalysis()">Run analysis now</button>
+        <button class="mini-btn" onclick="App.runRiskCheck()">Check for risk now</button>
+      </div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--sky-dim);color:var(--sky)">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Push notifications</div><div class="s-row-sub">${App.st.pushEnabled ? 'Enabled on this device' : 'Get alerts pushed to your phone'}</div></div>
+        </div>
+        ${App.st.pushEnabled
+          ? `<span style="font-size:11px;font-weight:600;color:var(--green)">On</span>`
+          : `<button class="mini-btn" style="padding:6px 12px" onclick="App.enablePush()">Enable</button>`}
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Connected Broker</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+            <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+          </div>
+          <div>
+            <div class="s-row-lbl">${App.st.broker === 'ibkr' ? 'Interactive Brokers' : App.st.broker === 'rh' ? 'Robinhood' : 'Trading 212'}</div>
+            <div class="s-row-sub">Read-only · Simulated feed for this prototype</div>
+          </div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:var(--green)">Connected</span>
+      </div>
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Account</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--sky-dim);color:var(--sky)">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Aly Coulibaly</div><div class="s-row-sub">alycoulibaly@sama.money</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:6px 2px 4px;font-size:11px;color:var(--subtle);text-align:center;line-height:1.55">
+      Analysis only — AlyInvest never places trades, holds money, or moves assets. Market data is simulated for this prototype. All recommendations are for informational purposes only and do not constitute financial advice.
+    </div>
+  `;
+};
+
+App.openSettings = function() {
+  document.getElementById('settings-panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+};
+
+App.closeAll = function() {
+  document.getElementById('notif-panel').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('show');
+};
+
+// ─── KEYBOARD ────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') App.closeAll();
+  if (e.key === 'Enter' && document.activeElement.id === 'chat-input') App.send();
+});
+
+App.boot = function() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
+};
+App.boot();
+
+})();
+</script>
+</body>
+</html>
