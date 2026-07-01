@@ -64,7 +64,7 @@ export async function load() {
 
   if (conn.type === 'trading212') {
     try {
-      const live = await trading212.verifyAndFetch(conn.apiKey, conn.practice);
+      const live = await trading212.verifyAndFetch(conn.apiKey, conn.apiSecret, conn.practice);
       return { user, cash: live.cash, holdings: live.holdings, _live: true };
     } catch (err) {
       console.error('[portfolio] Trading 212 fetch failed, falling back to demo:', err.message);

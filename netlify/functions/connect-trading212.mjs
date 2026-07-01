@@ -3,16 +3,20 @@ import * as brokerConnection from './_lib/brokerConnection.mjs';
 
 export default async (req) => {
   try {
-    const { apiKey, practice } = await req.json();
+    const { apiKey, apiSecret, practice } = await req.json();
     if (!apiKey || typeof apiKey !== 'string') {
       return Response.json({ error: 'API key is required.' }, { status: 400 });
     }
+    if (!apiSecret || typeof apiSecret !== 'string') {
+      return Response.json({ error: 'API secret is required — Trading 212 issues a separate key and secret.' }, { status: 400 });
+    }
 
-    const live = await trading212.verifyAndFetch(apiKey, !!practice);
+    const live = await trading212.verifyAndFetch(apiKey, apiSecret, !!practice);
 
     await brokerConnection.set({
       type: 'trading212',
       apiKey,
+      apiSecret,
       practice: !!practice,
       lastSyncedAt: new Date().toISOString(),
     });

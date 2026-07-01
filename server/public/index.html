@@ -830,8 +830,9 @@ App.renderBrokerForm = function(broker) {
   if (broker === 't212') {
     host.innerHTML = `
       <div class="broker-form">
-        <div class="broker-form-note">Generate a read-only API key in the Trading 212 app: Settings → API (Beta) → Generate API key.</div>
-        <input type="password" class="ob-text" style="margin-bottom:0" id="t212-key" placeholder="Paste your API key">
+        <div class="broker-form-note">Generate a read-only key in the Trading 212 app: Settings → API (Beta) → Generate API key. You'll get two values — an API Key and an API Secret — both are needed here.</div>
+        <input type="password" class="ob-text" style="margin-bottom:0" id="t212-key" placeholder="API Key">
+        <input type="password" class="ob-text" style="margin-bottom:0" id="t212-secret" placeholder="API Secret">
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
           <input type="checkbox" id="t212-practice" style="width:auto"> This is a Practice (demo) account
         </label>
@@ -948,11 +949,12 @@ async function submitConnect(url, body, errorElId, submitBtnId) {
 
 App.connectTrading212 = async function() {
   const apiKey = document.getElementById('t212-key').value.trim();
+  const apiSecret = document.getElementById('t212-secret').value.trim();
   const practice = document.getElementById('t212-practice').checked;
   const errEl = document.getElementById('t212-error');
-  if (!apiKey) { errEl.textContent = 'API key is required.'; errEl.style.display = 'block'; return; }
+  if (!apiKey || !apiSecret) { errEl.textContent = 'Both the API Key and API Secret are required.'; errEl.style.display = 'block'; return; }
   try {
-    await submitConnect('/api/connect/trading212', { apiKey, practice }, 't212-error', 't212-submit');
+    await submitConnect('/api/connect/trading212', { apiKey, apiSecret, practice }, 't212-error', 't212-submit');
     App.afterConnect();
   } catch (e) { /* error already shown */ }
 };
