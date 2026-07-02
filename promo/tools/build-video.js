@@ -10,7 +10,7 @@ const FF = require('ffmpeg-static');
 const PROMO = path.join(__dirname, '..');
 const FRAMES = path.join(PROMO, 'frames');
 const AUDIO = path.join(PROMO, 'audio');
-const OUT = path.join(PROMO, 'AlyInvest-Intro.mp4');
+const OUT = path.join(PROMO, 'Corvexsa-Intro.mp4');
 
 const timeline = JSON.parse(fs.readFileSync(path.join(PROMO, 'timeline.json'), 'utf8'));
 const total = timeline.total;

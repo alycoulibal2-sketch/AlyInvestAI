@@ -2,3 +2,4 @@ frames/*
 !frames/.gitkeep
 tools/node_modules/
 tools/package-lock.json
+music.wav
