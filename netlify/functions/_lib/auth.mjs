@@ -1,6 +1,7 @@
-// Verifies a Supabase access token by asking Supabase's own /auth/v1/user
-// endpoint whether it's valid — no JWT secret needs to live in this project,
-// and it stays correct even if Supabase rotates their signing keys.
+// Verifies a Firebase ID token by asking Firebase's own Identity Toolkit
+// REST API whether it's valid — no firebase-admin SDK / service account
+// private key needs to live in this project, and it stays correct even if
+// Firebase rotates their signing keys.
 
 import * as userRegistry from './userRegistry.mjs';
 
@@ -13,20 +14,28 @@ export class AuthError extends Error {
 
 export async function verifyUser(req) {
   const authHeader = req.headers.get('authorization') || '';
-  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  if (!token) throw new AuthError('Not signed in.');
+  const idToken = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!idToken) throw new AuthError('Not signed in.');
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !anonKey) throw new AuthError('Auth is not configured on the server.', 500);
+  const apiKey = process.env.FIREBASE_API_KEY;
+  if (!apiKey) throw new AuthError('Auth is not configured on the server.', 500);
 
-  const res = await fetch(`${supabaseUrl.replace(/\/$/, '')}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
+  const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ idToken }),
   });
   if (!res.ok) throw new AuthError('Session expired or invalid — please sign in again.');
 
-  const user = await res.json();
-  if (!user || !user.id) throw new AuthError('Session expired or invalid — please sign in again.');
+  const data = await res.json();
+  const account = data.users?.[0];
+  if (!account || !account.localId) throw new AuthError('Session expired or invalid — please sign in again.');
+
+  const user = {
+    id: account.localId,
+    email: account.email,
+    displayName: account.displayName,
+  };
 
   await userRegistry.register(user.id);
   return user;

@@ -7,7 +7,6 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <title>AlyInvest AI</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#07080c;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -775,8 +774,8 @@ App.st = { onboarded:false, obAnswers:{}, broker:null, pushEnabled:false, authMo
 App.chatHistory = []; // [{role,content}] sent to /api/chat for context
 App.portfolioView = null;
 App.notifs = [];
-App.supabase = null;
-App.session = null;
+App.firebase = null; // { auth, user } once loaded
+App.firebaseUser = null;
 
 // ─── FLOW ────────────────────────────────────────────────
 App.showFlow = function(id) {
@@ -796,25 +795,32 @@ function clearAuthError(elId) {
   document.getElementById(elId).classList.remove('show');
 }
 
-App.initSupabase = async function() {
-  const { supabaseUrl, supabaseAnonKey } = await fetch('/api/auth-config').then(r => r.json());
-  if (!supabaseUrl || !supabaseAnonKey) {
+App.initFirebase = async function() {
+  const { firebaseConfig } = await fetch('/api/auth-config').then(r => r.json());
+  if (!firebaseConfig || !firebaseConfig.apiKey) {
     showAuthError('welcome-error', 'Sign-in is not configured yet on the server.');
     document.getElementById('btn-google').disabled = true;
     return false;
   }
-  App.supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+  const [{ initializeApp }, authMod] = await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js'),
+  ]);
+  const app = initializeApp(firebaseConfig);
+  App.firebase = { authMod, auth: authMod.getAuth(app) };
   return true;
 };
 
 App.signInWithGoogle = async function() {
   clearAuthError('welcome-error');
-  if (!App.supabase) { showAuthError('welcome-error', 'Sign-in is still loading — try again in a moment.'); return; }
-  const { error } = await App.supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin },
-  });
-  if (error) showAuthError('welcome-error', error.message);
+  if (!App.firebase) { showAuthError('welcome-error', 'Sign-in is still loading — try again in a moment.'); return; }
+  try {
+    const provider = new App.firebase.authMod.GoogleAuthProvider();
+    await App.firebase.authMod.signInWithPopup(App.firebase.auth, provider);
+    // onAuthStateChanged (wired in App.boot) picks up the result from here.
+  } catch (err) {
+    showAuthError('welcome-error', err.message);
+  }
 };
 
 App.toggleAuthMode = function() {
@@ -834,46 +840,55 @@ App.submitEmailAuth = async function() {
   const email = document.getElementById('su-email').value.trim();
   const password = document.getElementById('su-pwd').value;
   if (!email || !password) { showAuthError('signup-error', 'Email and password are both required.'); return; }
-  if (!App.supabase) { showAuthError('signup-error', 'Sign-in is still loading — try again in a moment.'); return; }
+  if (!App.firebase) { showAuthError('signup-error', 'Sign-in is still loading — try again in a moment.'); return; }
 
   const btn = document.getElementById('signup-submit');
   const original = btn.textContent;
   btn.disabled = true; btn.textContent = 'Please wait…';
 
   const isSignup = App.st.authMode === 'signup';
-  const { data, error } = isSignup
-    ? await App.supabase.auth.signUp({ email, password })
-    : await App.supabase.auth.signInWithPassword({ email, password });
-
-  btn.disabled = false; btn.textContent = original;
-
-  if (error) { showAuthError('signup-error', error.message); return; }
-
-  if (isSignup && data.user && !data.session) {
-    showAuthError('signup-error', "Check your email to confirm your account, then come back and sign in.");
-    return;
+  const { auth, authMod } = App.firebase;
+  try {
+    if (isSignup) {
+      await authMod.createUserWithEmailAndPassword(auth, email, password);
+    } else {
+      await authMod.signInWithEmailAndPassword(auth, email, password);
+    }
+    // onAuthStateChanged (wired in App.boot) picks up the result from here.
+  } catch (err) {
+    showAuthError('signup-error', friendlyFirebaseError(err));
+  } finally {
+    btn.disabled = false; btn.textContent = original;
   }
-
-  App.session = data.session;
-  await App.afterSignIn();
 };
 
+function friendlyFirebaseError(err) {
+  const code = err.code || '';
+  if (code.includes('email-already-in-use')) return 'An account with this email already exists — try signing in instead.';
+  if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) return 'Incorrect email or password.';
+  if (code.includes('weak-password')) return 'Password must be at least 6 characters.';
+  if (code.includes('invalid-email')) return 'That email address looks invalid.';
+  if (code.includes('popup-closed-by-user')) return 'Sign-in was cancelled.';
+  return err.message || 'Something went wrong — please try again.';
+}
+
 App.signOut = async function() {
-  if (App.supabase) await App.supabase.auth.signOut();
+  if (App.firebase) await App.firebase.authMod.signOut(App.firebase.auth);
   window.location.reload();
 };
 
-// Adds the current session's access token to every backend call. Netlify
-// Functions reject anything without a valid one (see _lib/auth.mjs).
+// Adds a fresh Firebase ID token to every backend call. getIdToken() returns
+// the cached token or silently refreshes it if expired — never stale.
+// Netlify Functions reject anything without a valid one (see _lib/auth.mjs).
 App.apiFetch = async function(url, opts) {
   opts = opts || {};
   const headers = Object.assign({}, opts.headers || {});
-  if (App.session) headers['Authorization'] = 'Bearer ' + App.session.access_token;
+  if (App.firebaseUser) headers['Authorization'] = 'Bearer ' + (await App.firebaseUser.getIdToken());
   const res = await fetch(url, Object.assign({}, opts, { headers }));
   if (res.status === 401) {
-    // Session expired server-side — force a clean re-auth rather than
+    // Session invalid server-side — force a clean re-auth rather than
     // leaving the user staring at silently-failing requests.
-    App.session = null;
+    App.firebaseUser = null;
     document.getElementById('app').classList.add('is-flow');
     App.showFlow('welcome');
     showAuthError('welcome-error', 'Your session expired — please sign in again.');
@@ -1592,32 +1607,26 @@ App.boot = async function() {
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
   }
 
-  const configured = await App.initSupabase();
+  const configured = await App.initFirebase();
   const hideSplash = () => document.getElementById('boot-splash').style.display = 'none';
 
   if (!configured) { hideSplash(); return; }
 
-  // React to sign-in (including the redirect back from Google OAuth) and
-  // sign-out from anywhere in the app, not just the buttons that triggered them.
-  App.supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && (!App.session || App.session.access_token !== session.access_token)) {
-      App.session = session;
-      if (!App.st.onboarded) App.afterSignIn();
-    } else if (event === 'SIGNED_OUT') {
-      App.session = null;
+  // onAuthStateChanged is Firebase's single source of truth for session
+  // state — it fires once immediately with the restored session (or null)
+  // on load, and again on every sign-in/sign-out from anywhere in the app.
+  let firstFire = true;
+  App.firebase.authMod.onAuthStateChanged(App.firebase.auth, async (user) => {
+    App.firebaseUser = user;
+    if (user && !App.st.onboarded) {
+      try {
+        await App.afterSignIn();
+      } catch (err) {
+        // apiFetch already routes to the welcome screen with an error on 401
+      }
     }
+    if (firstFire) { firstFire = false; hideSplash(); }
   });
-
-  const { data: { session } } = await App.supabase.auth.getSession();
-  if (session) {
-    App.session = session;
-    try {
-      await App.afterSignIn();
-    } catch (err) {
-      // apiFetch already routes to the welcome screen with an error on 401
-    }
-  }
-  hideSplash();
 };
 App.boot();
 

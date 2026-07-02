@@ -19,7 +19,7 @@ import * as trading212 from './brokers/trading212.mjs';
 import * as ibkr from './brokers/ibkr.mjs';
 
 function defaultUserProfile(authUser) {
-  const name = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || authUser?.email?.split('@')[0] || 'New Client';
+  const name = authUser?.displayName || authUser?.email?.split('@')[0] || 'New Client';
   return {
     name,
     riskProfile: 'Moderate',
