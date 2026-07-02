@@ -28,9 +28,11 @@ export default withAuth(async (req, context, user) => {
 
     const reply = await claude.chat(portfolioView, snapshot, latestAnalysis, history, message);
 
+    // Stored text = short answer + explanation, so Claude's future context
+    // window reads naturally; the full structure rides along in `data`.
     await chatStore.append(user.id, [
       { role: 'user', text: message },
-      { role: 'advisor', text: reply },
+      { role: 'advisor', text: reply.shortAnswer + '\n\n' + reply.explanation, data: reply },
     ]);
 
     return Response.json({ reply });

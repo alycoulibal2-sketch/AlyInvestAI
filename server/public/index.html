@@ -546,6 +546,34 @@ input,textarea{font-family:inherit}
 }
 @keyframes liveDotPulse{0%,100%{opacity:1}50%{opacity:.35}}
 
+/* ── STRUCTURED ADVISOR REPLY ── */
+.adv-short{font-weight:600;color:var(--text)}
+.adv-expl{margin-top:7px;color:var(--text)}
+.adv-action{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:11px;font-size:11px;font-weight:700;
+  padding:4px 11px;border-radius:999px;letter-spacing:.4px;text-transform:uppercase
+}
+.adv-action.a-buy{background:var(--green-dim);color:var(--green)}
+.adv-action.a-reduce{background:var(--red-dim);color:var(--red)}
+.adv-action.a-hold{background:rgba(232,168,64,.14);color:var(--amber)}
+.adv-action.a-wait,.adv-action.a-monitor{background:var(--sky-dim);color:var(--sky)}
+.adv-action.a-rebalance{background:var(--gold-dim);color:var(--gold)}
+.adv-tech-toggle{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:12px;font-size:12px;font-weight:600;color:var(--sky);
+  cursor:pointer;user-select:none
+}
+.adv-tech-toggle svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;transition:transform .2s}
+.adv-tech-toggle.open svg{transform:rotate(90deg)}
+.adv-tech{
+  display:none;margin-top:10px;padding:12px 14px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:12px;font-size:12.5px;color:var(--muted);line-height:1.62;
+  white-space:pre-wrap
+}
+.adv-tech.open{display:block;animation:fadeUpIn .3s ease-out}
+
 /* ── MEMBERSHIP / GLASS ── */
 .glass-veil{
   position:fixed;inset:0;z-index:150;
@@ -1106,7 +1134,33 @@ App.obPick = function(el, step, multi) {
 
 App.obNext = function(i) {
   if (i + 1 < OB_QS.length) { App.showFlow('ob-' + (i+1)); }
-  else { App.showFlow('connect'); }
+  else { App.saveProfile(); App.showFlow('connect'); }
+};
+
+// Persist the onboarding answers to the account: the advisor adapts to them
+// permanently (especially the experience level) and never asks again.
+App.saveProfile = async function() {
+  const a = App.st.obAnswers;
+  const EXP_MAP = {
+    'Just getting started': 'Beginner',
+    'Some experience': 'Intermediate',
+    'Experienced investor': 'Advanced',
+    'Professional background': 'Professional',
+  };
+  const profile = {};
+  if (a[0]) profile.experience = EXP_MAP[a[0]] || 'Intermediate';
+  if (a[1]) profile.goals = [a[1]];
+  if (a[2]) profile.riskProfile = a[2];
+  if (a[3]) profile.horizon = a[3];
+  if (a[4]) profile.monthlyContribution = a[4];
+  if (a[5] && a[5].length) profile.preferredSectors = a[5];
+  if (a[6]) profile.recommendationPriority = a[6];
+  try {
+    await App.apiFetch('/api/profile', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(profile),
+    });
+  } catch (e) { /* non-blocking — defaults apply until saved */ }
 };
 
 App.obBack = function(i) {
@@ -1658,6 +1712,30 @@ function bubbleA(text) {
 function bubbleU(text) {
   return `<div class="msg user msg-in"><div class="msg-av">AC</div><div class="msg-bubble">${esc(text)}</div></div>`;
 }
+// Structured advisor reply: short answer → explanation → action pill →
+// collapsible technical section (open by default in Analyst Mode).
+function bubbleAdvisor(d) {
+  if (!d || !d.shortAnswer) return bubbleA((d && d.explanation) || '');
+  const open = d.mode === 'analyst';
+  const actionCls = { Buy: 'a-buy', Hold: 'a-hold', Reduce: 'a-reduce', Wait: 'a-wait', Monitor: 'a-monitor', Rebalance: 'a-rebalance' }[d.action];
+  return `<div class="msg advisor msg-in"><div class="msg-av">C</div><div class="msg-bubble">
+    <div class="adv-short">${esc(d.shortAnswer)}</div>
+    <div class="adv-expl">${esc(d.explanation).replace(/\n/g,'<br>')}</div>
+    ${actionCls ? `<div><span class="adv-action ${actionCls}">${esc(d.action)}</span></div>` : ''}
+    ${d.technical ? `
+      <div class="adv-tech-toggle ${open ? 'open' : ''}" onclick="App.toggleTech(this)">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        ${open ? 'Technical analysis' : 'Show technical analysis'}
+      </div>
+      <div class="adv-tech ${open ? 'open' : ''}">${esc(d.technical)}</div>` : ''}
+  </div></div>`;
+}
+App.toggleTech = function(el) {
+  el.classList.toggle('open');
+  const tech = el.nextElementSibling;
+  if (tech) tech.classList.toggle('open');
+  el.lastChild.textContent = el.classList.contains('open') ? ' Technical analysis' : ' Show technical analysis';
+};
 function cardAlert(a) {
   const crit = a.severity === 'critical';
   return `<div class="msg-card">
@@ -1723,7 +1801,7 @@ App.renderConvo = function(feed) {
       (item.recommendations || []).filter(r => r.action !== 'hold').forEach(r => html += cardRec(r));
       (item.opportunities || []).forEach(o => html += cardOpp(o));
     } else {
-      html += item.role === 'user' ? bubbleU(item.text) : bubbleA(item.text);
+      html += item.role === 'user' ? bubbleU(item.text) : (item.data ? bubbleAdvisor(item.data) : bubbleA(item.text));
     }
   }
 
@@ -1774,7 +1852,7 @@ App.send = async function() {
       $m(bubbleA('I hit a technical issue answering that — give me a moment and ask again.'));
       return;
     }
-    $m(bubbleA(data.reply));
+    $m(typeof data.reply === 'object' ? bubbleAdvisor(data.reply) : bubbleA(data.reply));
   } catch (err) {
     hideTyping();
     if (err && (err.message === 'Session expired' || err.message === 'membership_required')) return; // handled by apiFetch
@@ -1923,7 +2001,7 @@ App.notifTap = async function(id) {
     const data = await res.json();
     hideTyping();
     if (data.reply) {
-      $m(bubbleA(data.reply));
+      $m(typeof data.reply === 'object' ? bubbleAdvisor(data.reply) : bubbleA(data.reply));
     } else {
       console.error('chat error:', data.error);
       $m(bubbleA('I hit a technical issue pulling that up — tap it again in a moment.'));

@@ -17,6 +17,6 @@ export async function list(userId) {
 export async function append(userId, turns) {
   const items = await list(userId);
   const at = new Date().toISOString();
-  for (const t of turns) items.push({ role: t.role, text: t.text, at });
+  for (const t of turns) items.push({ role: t.role, text: t.text, data: t.data || undefined, at });
   await store().set(k(userId), JSON.stringify(items.slice(-CAP)));
 }

@@ -32,10 +32,11 @@ async function callClaude({ system, messages, tools, tool_choice, max_tokens = 4
   return res.json();
 }
 
-const ADVISOR_VOICE = `You are Corvexsa, the personal AI investment advisor inside the Corvexsa app.
+const BASE_VOICE = `You are Corvexsa, the personal AI investment advisor inside the Corvexsa app.
 You are not a chatbot and never describe yourself as one. You speak like a thoughtful, calm
-wealth manager texting a long-time client — warm, direct, plain language, no jargon dumps,
-no hedging disclaimers stacked on every sentence, no emoji.
+wealth manager texting a long-time client — warm, direct, reassuring, no emoji.
+The goal is never to impress with financial jargon — it is to make the client feel
+confident that they understand exactly what is happening with their money.
 
 Hard rules:
 - Corvexsa is READ-ONLY. It never executes trades, never holds money, never moves assets.
@@ -49,7 +50,36 @@ Hard rules:
   quantities; their sum must not exceed the client's stated cash available. If it would, scale
   down quantities or drop the lowest-confidence opportunity rather than exceed the cash budget.
 - Respect the client's stated risk profile and sector concentration target when reasoning.
-- Keep prose tight: 2-5 sentences per message unless the user asks for more detail.`;
+- Keep prose tight: 2-5 sentences per section unless the client asks for more detail.`;
+
+// Communication style, keyed to the experience level the client gave during
+// onboarding. Applied automatically to every response — never ask again.
+const STYLES = {
+  Beginner: `COMMUNICATION LEVEL — BEGINNER (completely new to investing):
+Speak like an excellent human financial advisor talking to someone brand new.
+Avoid technical words whenever possible; never assume financial knowledge.
+Instead of "Microsoft's forward P/E increased while EBITDA remained strong," say
+"Microsoft is still performing well as a company, and nothing important has changed
+since yesterday. I don't recommend making any changes today."
+If a technical term is genuinely necessary, explain it naturally in the same breath,
+e.g. "P/E ratio — simply a way of estimating whether a stock looks expensive or
+inexpensive compared to the money the company earns."
+The client should finish every reply thinking: "I understand exactly what my advisor meant."`,
+  Intermediate: `COMMUNICATION LEVEL — INTERMEDIATE:
+Use some investment terminology (diversification, valuation, earnings) but keep every
+explanation clear. Explain the important concepts briefly without overwhelming.`,
+  Advanced: `COMMUNICATION LEVEL — ADVANCED:
+Use financial metrics naturally. Discuss valuation, earnings, financial ratios and
+risks directly — no hand-holding, but stay concise and readable.`,
+  Professional: `COMMUNICATION LEVEL — PROFESSIONAL:
+Provide complete financial analysis: assumptions, valuation methodology, risk metrics,
+scenario thinking. No simplification necessary. The client should finish thinking:
+"My advisor clearly knows what they're talking about."`,
+};
+
+function styleFor(experience) {
+  return STYLES[experience] || STYLES.Intermediate;
+}
 
 function toolChoice(name) { return { type: 'tool', name }; }
 
@@ -174,7 +204,8 @@ RECENT NOTIFICATIONS ALREADY SENT (avoid repeating the same point verbatim):
 ${JSON.stringify((recentNotifications || []).slice(0, 6).map(n => n.title))}`;
 
   const resp = await callClaude({
-    system: ADVISOR_VOICE,
+    system: BASE_VOICE + '\n\n' + styleFor(portfolioView.user?.experience) +
+      '\nWrite advisorMessage, every rationale, and every alert body at this communication level.',
     messages: [{ role: 'user', content: userMsg }],
     tools: [ANALYSIS_TOOL],
     tool_choice: toolChoice('record_analysis'),
@@ -195,7 +226,8 @@ INTRADAY MARKET TICK: ${JSON.stringify(marketSnapshot.tickers.map(t => ({ ticker
 VIX: ${marketSnapshot.vix}`;
 
   const resp = await callClaude({
-    system: ADVISOR_VOICE,
+    system: BASE_VOICE + '\n\n' + styleFor(portfolioView.user?.experience) +
+      '\nWrite every alert title and body at this communication level.',
     messages: [{ role: 'user', content: userMsg }],
     tools: [RISK_TOOL],
     tool_choice: toolChoice('record_risk_check'),
@@ -204,12 +236,51 @@ VIX: ${marketSnapshot.vix}`;
   return extractToolInput(resp, 'record_risk_check');
 }
 
+// Structured reply: Short Answer → Simple Explanation → Recommended Action →
+// optional technical section (collapsed in the UI unless Analyst Mode).
+const REPLY_TOOL = {
+  name: 'advisor_reply',
+  description: "Deliver the advisor's reply to the client in Corvexsa's standard structure.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: {
+        type: 'string', enum: ['advisor', 'analyst'],
+        description: "advisor = default calm wealth-manager reply. analyst = the client explicitly asked for detail ('explain in detail', 'show calculations', 'why exactly', 'show valuation', 'show assumptions', 'show technical analysis').",
+      },
+      shortAnswer: { type: 'string', description: 'ONE sentence that directly answers the question, e.g. "I don\'t recommend making any changes today."' },
+      explanation: { type: 'string', description: 'Why — in clear language matched to the client\'s communication level. 2-5 sentences (analyst mode may go longer).' },
+      action: { type: 'string', enum: ['Buy', 'Hold', 'Reduce', 'Wait', 'Monitor', 'Rebalance', 'None'], description: 'The single recommended action. None when the reply is conversational and no action applies.' },
+      technical: { type: 'string', description: 'Optional deeper analysis for those who want it: relevant ratios, valuation, growth metrics, risk numbers, historical comparison — derived only from the supplied data. In analyst mode make this thorough (assumptions, methodology, scenarios). Omit only when truly nothing technical applies.' },
+    },
+    required: ['mode', 'shortAnswer', 'explanation', 'action'],
+  },
+};
+
+const STRUCTURE_RULES = `RESPONSE STRUCTURE (always, via the advisor_reply tool):
+1. shortAnswer — one sentence answering the question directly.
+2. explanation — the why, in clear language at the client's communication level.
+3. action — one of Buy / Hold / Reduce / Wait / Monitor / Rebalance / None.
+4. technical — deeper numbers for clients who choose to expand it. Even for beginners,
+   keep the MAIN reply jargon-free and put the numbers here instead.
+
+MODE:
+- Default is advisor mode: calm, professional, reassuring — a private wealth manager, not a textbook.
+- Switch mode to "analyst" ONLY when the client explicitly asks for depth ("explain in detail",
+  "show calculations", "why exactly", "show valuation", "show assumptions", "show technical analysis").
+  In analyst mode, technical must be thorough: ratios, growth, valuation reasoning, DCF-style
+  assumptions where sensible, risk and confidence reasoning, historical comparison.
+- Never ask the client to pick a mode — adapt automatically.`;
+
+// The context engine: everything the advisor needs, injected fresh on every
+// request. The advisor NEVER relies on chat history to know the portfolio.
 export async function chat(portfolioView, marketSnapshot, latestAnalysis, history, userMessage) {
-  const context = `Client portfolio context you must ground every answer in:
+  const u = portfolioView.user || {};
+  const context = `FRESH CLIENT CONTEXT (authoritative and current — always prefer this over anything in chat history):
 TOTAL: $${portfolioView.total} · CASH AVAILABLE: $${portfolioView.cash}
 HOLDINGS: ${JSON.stringify(portfolioView.holdings.map(h => ({ ticker: h.ticker, weightPct: h.weightPct, shares: h.shares, price: h.price, avgCost: h.avgCost, gainPct: h.gainPct })))}
-SECTOR WEIGHTS: ${JSON.stringify(portfolioView.sectorWeights)}
-RISK PROFILE: ${portfolioView.user.riskProfile} · SECTOR CONCENTRATION TARGET: ${portfolioView.user.maxSectorConcentrationTarget}%
+ALLOCATION (sector weights): ${JSON.stringify(portfolioView.sectorWeights)}
+CLIENT PROFILE: risk ${u.riskProfile || 'Moderate'} · horizon ${u.horizon || 'n/a'} · goals ${JSON.stringify(u.goals || [])} · preferred sectors ${JSON.stringify(u.preferredSectors || [])} · monthly investing ${u.monthlyContribution || 'n/a'} · sector concentration target ${u.maxSectorConcentrationTarget || 35}%
 
 TODAY'S MARKET (simulated feed standing in for a live market data provider):
 ${JSON.stringify((marketSnapshot?.tickers || []).map(t => ({ ticker: t.ticker, price: t.price, changePct: t.changePct, headline: t.headline || undefined, daysToEarnings: t.daysToEarnings })))}
@@ -230,10 +301,12 @@ never invent figures not computable from this data.`;
   ];
 
   const resp = await callClaude({
-    system: ADVISOR_VOICE + '\n\n' + context,
+    system: BASE_VOICE + '\n\n' + styleFor(u.experience) + '\n\n' + STRUCTURE_RULES + '\n\n' + context,
     messages,
-    max_tokens: 4096,
-    effort: 'low',
+    tools: [REPLY_TOOL],
+    tool_choice: toolChoice('advisor_reply'),
+    max_tokens: 5000,
+    effort: 'low', // conversational latency; the structure carries the rigor
   });
-  return extractText(resp);
+  return extractToolInput(resp, 'advisor_reply');
 }

@@ -22,6 +22,7 @@ function defaultUserProfile(authUser) {
   const name = authUser?.displayName || authUser?.email?.split('@')[0] || 'New Client';
   return {
     name,
+    experience: 'Intermediate',
     riskProfile: 'Moderate',
     horizon: '15+ years',
     monthlyContribution: 1500,

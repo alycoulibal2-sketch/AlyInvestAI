@@ -13,7 +13,7 @@ export default withAuth(async (req, context, user) => {
   ]);
 
   const feed = [
-    ...chat.map(m => ({ kind: 'chat', role: m.role, text: m.text, at: m.at })),
+    ...chat.map(m => ({ kind: 'chat', role: m.role, text: m.text, data: m.data, at: m.at })),
     ...analyses.map(a => ({
       kind: 'analysis',
       at: a.ranAt,
