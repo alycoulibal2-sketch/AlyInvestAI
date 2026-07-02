@@ -329,7 +329,7 @@
     var s = el("div", "sub anim", wrap);
     s.textContent = scene.sub || "";
     var pill = el("div", "pill anim", wrap);
-    pill.textContent = "alyinvestai.netlify.app";
+    pill.textContent = "Noce.com";
     if (scene.disclaimer) {
       var dis = el("div", "disclaimer", wrap);
       dis.textContent = scene.disclaimer;
@@ -391,14 +391,14 @@
       node.rootEl.style.opacity = op.toFixed(4);
 
       // text + media reveals
-      applyReveal(node.headline, lt, 0.15, 0.85, 26);
-      applyReveal(node.sub, lt, 0.45, 1.15, 26);
-      applyReveal(node.media, lt, 0.35, 1.15, 34);
+      applyReveal(node.headline, lt, 0.08, 0.52, 30);
+      applyReveal(node.sub, lt, 0.24, 0.72, 30);
+      applyReveal(node.media, lt, 0.16, 0.66, 44);
 
       // Ken Burns on the inner image, across full scene duration
       if (node.img) {
         var kp = dur > 0 ? clamp(lt / dur, 0, 1) : 0;
-        var scale = 1.06 + 0.08 * kp;
+        var scale = 1.07 + 0.13 * kp;
         var ty = -2 * kp; // percent
         node.img.style.transform = "scale(" + scale.toFixed(4) + ") translateY(" + ty.toFixed(3) + "%)";
       }
