@@ -1,11 +1,24 @@
 import { getStore } from '@netlify/blobs';
 import webpush from 'web-push';
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+// Push notifications are optional — chat/analysis/portfolio must keep working
+// even if VAPID keys were never configured. A bad or missing key here must
+// never crash the whole module (and therefore every function that imports
+// it transitively through analysisCore.mjs).
+const VAPID_CONFIGURED = !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+if (VAPID_CONFIGURED) {
+  try {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+  } catch (err) {
+    console.error('[push] Invalid VAPID keys, push notifications disabled:', err.message);
+  }
+} else {
+  console.warn('[push] VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY not set — push notifications are disabled.');
+}
 
 function store() { return getStore('alyinvest'); }
 
@@ -32,6 +45,7 @@ export async function removeSubscription(endpoint) {
 }
 
 export async function sendToAll(payload) {
+  if (!VAPID_CONFIGURED) return { sent: 0, pruned: 0, skipped: 'vapid-not-configured' };
   const subs = await loadSubs();
   const body = JSON.stringify(payload);
   const results = await Promise.allSettled(subs.map(s => webpush.sendNotification(s, body)));
