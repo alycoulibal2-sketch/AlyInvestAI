@@ -22,6 +22,11 @@ export async function getLatestAnalysis(userId) {
   return log[0] || null;
 }
 
+export async function listAnalyses(userId, limit = 10) {
+  const log = await loadLog(userId);
+  return log.slice(0, limit);
+}
+
 export async function currentPortfolioView(userId, marketSnapshot, authUser) {
   const state = await portfolioLib.load(userId, authUser);
   const priced = state._live ? state : portfolioLib.applyDemoMarketPrices(state, marketSnapshot);

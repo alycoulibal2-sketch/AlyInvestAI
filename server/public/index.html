@@ -785,7 +785,6 @@ const App = window.App = {};
 App.OB = OB_QS;
 
 App.st = { onboarded:false, obAnswers:{}, broker:null, pushEnabled:false, authMode:'signup' };
-App.chatHistory = []; // [{role,content}] sent to /api/chat for context
 App.portfolioView = null;
 App.notifs = [];
 App.firebase = null; // { auth, user } once loaded
@@ -1175,7 +1174,7 @@ App.afterConnect = async function() {
     App.st.onboarded = true;
     document.getElementById('app').classList.remove('is-flow');
   }
-  await App.loadAll({ skipLatest: true });
+  await App.loadAll();
   App.runAnalysis();
   if (Notification && Notification.permission === 'default') {
     document.getElementById('push-banner').classList.add('show');
@@ -1206,21 +1205,20 @@ App.disconnectBroker = async function() {
   App.loadAll();
 };
 
-App.loadAll = async function(opts) {
-  opts = opts || {};
-  const [portfolio, notifs, latest, brokerStatus] = await Promise.all([
+App.loadAll = async function() {
+  const [portfolio, notifs, convo, brokerStatus] = await Promise.all([
     App.apiFetch('/api/portfolio').then(r => r.json()),
     App.apiFetch('/api/notifications').then(r => r.json()),
-    opts.skipLatest ? Promise.resolve(null) : App.apiFetch('/api/analysis/latest').then(r => r.json()),
+    App.apiFetch('/api/conversation').then(r => r.json()),
     App.apiFetch('/api/broker-status').then(r => r.json()),
   ]);
   App.portfolioView = portfolio;
   App.notifs = notifs;
-  App.latestAnalysis = latest;
+  App.latestAnalysis = convo.latestAnalysis;
   App.brokerStatus = brokerStatus;
   App.st.lastSync = new Date().toISOString();
-  document.getElementById('health-score').textContent = latest ? latest.portfolioHealthScore : '—';
-  App.renderConvo(latest);
+  document.getElementById('health-score').textContent = convo.latestAnalysis ? convo.latestAnalysis.portfolioHealthScore : '—';
+  App.renderConvo(convo.feed);
   App.renderNotifs();
   App.renderSettings();
   App.startLiveRefresh();
@@ -1353,24 +1351,44 @@ function cardOpp(o) {
 }
 function daySep(label) { return `<div class="day-sep">${label}</div>`; }
 
-App.renderConvo = function(latest) {
+function dayLabel(d) {
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+// Renders the account's stored conversation feed (chat turns + analyses,
+// already merged and sorted by the server) so history survives reloads.
+App.renderConvo = function(feed) {
+  feed = feed || [];
   const msgs = document.getElementById('messages');
   let html = '';
   html += bubbleA("Hi Aly. I'm watching your portfolio around the clock — I'll run a full review every 24 hours and flag anything material the moment it happens. Ask me anything in the meantime.");
 
-  if (latest) {
-    html += daySep(new Date(latest.ranAt).toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric'}));
-    html += bubbleA(latest.advisorMessage);
-    (latest.alerts||[]).forEach(a => html += cardAlert(a));
-    (latest.recommendations||[]).filter(r=>r.action!=='hold').forEach(r => html += cardRec(r));
-    (latest.opportunities||[]).forEach(o => html += cardOpp(o));
-  } else {
+  let lastDay = '';
+  const hasAnalysis = feed.some(i => i.kind === 'analysis');
+  for (const item of feed) {
+    const d = new Date(item.at);
+    if (d.toDateString() !== lastDay) { html += daySep(dayLabel(d)); lastDay = d.toDateString(); }
+    if (item.kind === 'analysis') {
+      html += bubbleA(item.advisorMessage);
+      (item.alerts || []).forEach(a => html += cardAlert(a));
+      (item.recommendations || []).filter(r => r.action !== 'hold').forEach(r => html += cardRec(r));
+      (item.opportunities || []).forEach(o => html += cardOpp(o));
+    } else {
+      html += item.role === 'user' ? bubbleU(item.text) : bubbleA(item.text);
+    }
+  }
+
+  if (!hasAnalysis) {
     html += bubbleA("I haven't run my first review yet. Tap \"Run analysis now\" below (or in Settings) and I'll analyze your holdings against today's market and give you real recommendations.");
   }
 
   msgs.innerHTML = html;
   msgs.scrollTop = msgs.scrollHeight;
-  renderSuggestions(!latest);
+  renderSuggestions(!hasAnalysis);
 };
 
 function renderSuggestions(needsFirstRun) {
@@ -1400,7 +1418,7 @@ App.send = async function() {
   try {
     const res = await App.apiFetch('/api/chat', {
       method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ message: txt, history: App.chatHistory.slice(-10) }),
+      body: JSON.stringify({ message: txt }),
     });
     const data = await res.json();
     hideTyping();
@@ -1412,8 +1430,6 @@ App.send = async function() {
       return;
     }
     $m(bubbleA(data.reply));
-    App.chatHistory.push({role:'user', content:txt});
-    App.chatHistory.push({role:'assistant', content:data.reply});
   } catch (err) {
     hideTyping();
     if (err && err.message === 'Session expired') return; // apiFetch already routed to sign-in
@@ -1556,7 +1572,7 @@ App.notifTap = async function(id) {
   try {
     const res = await App.apiFetch('/api/chat', {
       method:'POST', headers:{'content-type':'application/json'},
-      body: JSON.stringify({ message: `Tell me more about this: "${n.title}" — ${n.body}`, history: App.chatHistory.slice(-10) }),
+      body: JSON.stringify({ message: `Tell me more about this: "${n.title}" — ${n.body}` }),
     });
     const data = await res.json();
     hideTyping();
