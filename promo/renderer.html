@@ -54,7 +54,7 @@
   .logo-tile{
     display:flex;align-items:center;justify-content:center;
     background:linear-gradient(160deg,#1d1f29,#12141b);
-    border:1px solid rgba(199,168,103,.35);
+    border:1px solid rgba(59,130,246,.35);
     box-shadow:0 8px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
   }
   /* ----- hook template ----- */
@@ -214,22 +214,21 @@
     return e;
   }
 
-  var LOGO_UID = 0;
   function logoTile(sizePx) {
     var tile = document.createElement("div");
     tile.className = "logo-tile";
     tile.style.width = sizePx + "px";
     tile.style.height = sizePx + "px";
     tile.style.borderRadius = Math.round(sizePx * 0.27) + "px";
-    var gid = "goldGrad" + (LOGO_UID++);
-    var inner = Math.round(sizePx * 0.62);
-    tile.innerHTML =
-      '<svg width="' + inner + '" height="' + inner + '" viewBox="0 0 34 34">' +
-      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
-      '<stop offset="0" stop-color="#9a7830"/><stop offset="1" stop-color="#C7A867"/>' +
-      '</linearGradient></defs>' +
-      '<path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z" fill="url(#' + gid + ')"/>' +
-      '</svg>';
+    tile.style.overflow = "hidden";
+    var img = document.createElement("img");
+    img.src = "logo-mark.png";
+    img.alt = "";
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+    img.onerror = function () { img.style.display = "none"; };
+    tile.appendChild(img);
     return tile;
   }
 

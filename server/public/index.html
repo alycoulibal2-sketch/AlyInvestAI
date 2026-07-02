@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#07080c">
 <link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" href="/icon-192.png">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <title>Corvexsa</title>
 <style>
@@ -60,12 +61,8 @@ input,textarea{font-family:inherit}
   position:relative;z-index:10
 }
 .topbar-brand{display:flex;align-items:center;gap:9px}
-.topbar-logomark{
-  width:28px;height:28px;border-radius:7px;
-  background:linear-gradient(135deg,#a08038,var(--gold));
-  display:flex;align-items:center;justify-content:center
-}
-.topbar-logomark svg{width:15px;height:15px;fill:#07080c}
+.topbar-logomark{width:28px;height:28px;border-radius:7px;overflow:hidden;background:#0a0e1f;display:flex;align-items:center;justify-content:center}
+.topbar-logomark img{width:100%;height:100%;object-fit:cover}
 .topbar-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
 
 .topbar-center{
@@ -397,13 +394,8 @@ input,textarea{font-family:inherit}
 
 /* welcome */
 .wlc-logo{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:44px}
-.wlc-mark{
-  width:70px;height:70px;border-radius:18px;
-  background:linear-gradient(145deg,#9a7830,var(--gold));
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 0 1px rgba(199,168,103,.2),0 8px 32px rgba(199,168,103,.15)
-}
-.wlc-mark svg{width:34px;height:34px;fill:#07080c}
+.wlc-mark{width:70px;height:70px;border-radius:18px;overflow:hidden;background:#0a0e1f;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(59,130,246,.25),0 8px 32px rgba(59,130,246,.18)}
+.wlc-mark img{width:100%;height:100%;object-fit:cover}
 .wlc-tagline{font-size:12px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
 .wlc-h{font-size:27px;font-weight:700;color:var(--text);text-align:center;line-height:1.2;letter-spacing:-.4px;margin-bottom:10px}
 .wlc-sub{font-size:15px;color:var(--muted);text-align:center;line-height:1.55;margin-bottom:36px}
@@ -531,13 +523,8 @@ input,textarea{font-family:inherit}
   position:fixed;inset:0;z-index:200;background:var(--bg);
   display:flex;align-items:center;justify-content:center
 }
-.boot-mark{
-  width:56px;height:56px;border-radius:14px;
-  background:linear-gradient(145deg,#9a7830,var(--gold));
-  display:flex;align-items:center;justify-content:center;
-  animation:bootPulse 1.4s ease-in-out infinite
-}
-.boot-mark svg{width:26px;height:26px;fill:#07080c}
+.boot-mark{width:56px;height:56px;border-radius:14px;overflow:hidden;background:#0a0e1f;display:flex;align-items:center;justify-content:center;animation:bootPulse 1.4s ease-in-out infinite}
+.boot-mark img{width:100%;height:100%;object-fit:cover}
 @keyframes bootPulse{0%,100%{opacity:1}50%{opacity:.55}}
 .auth-btn[disabled]{opacity:.4;pointer-events:none;cursor:default}
 .auth-error{
@@ -552,7 +539,7 @@ input,textarea{font-family:inherit}
 </head>
 <body>
 <div id="boot-splash">
-  <div class="boot-mark"><svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg></div>
+  <div class="boot-mark"><img src="/logo.png" alt="Corvexsa"></div>
 </div>
 <div id="app" class="is-flow">
 
@@ -564,7 +551,7 @@ input,textarea{font-family:inherit}
       <div class="flow-screen active" data-screen="welcome">
         <div class="wlc-logo">
           <div class="wlc-mark">
-            <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
+            <img src="/logo.png" alt="Corvexsa">
           </div>
           <span class="wlc-tagline">Your personal investment advisor</span>
         </div>
@@ -661,7 +648,7 @@ input,textarea{font-family:inherit}
     <div class="topbar">
       <div class="topbar-brand">
         <div class="topbar-logomark">
-          <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
+          <img src="/logo.png" alt="Corvexsa">
         </div>
         <span class="topbar-name">Corvexsa</span>
       </div>
