@@ -3,8 +3,8 @@ self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', (event) => {
   let data = {};
-  try { data = event.data.json(); } catch (e) { data = { title: 'AlyInvest', body: event.data ? event.data.text() : '' }; }
-  const title = data.title || 'AlyInvest · Your Advisor';
+  try { data = event.data.json(); } catch (e) { data = { title: 'Nera', body: event.data ? event.data.text() : '' }; }
+  const title = data.title || 'Nera · Your Advisor';
   const options = {
     body: data.body || '',
     icon: '/icon-192.png',

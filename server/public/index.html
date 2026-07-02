@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#07080c">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
-<title>AlyInvest AI</title>
+<title>Nera</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#07080c;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -569,7 +569,7 @@ input,textarea{font-family:inherit}
           <span class="wlc-tagline">Your personal investment advisor</span>
         </div>
         <h1 class="wlc-h">Smarter investing starts with a conversation.</h1>
-        <p class="wlc-sub">AlyInvest is your personal AI wealth advisor — not a trading platform. It analyzes your portfolio and gives you expert, personalized guidance.</p>
+        <p class="wlc-sub">Nera is your personal AI wealth advisor — not a trading platform. It analyzes your portfolio and gives you expert, personalized guidance.</p>
         <div class="auth-error" id="welcome-error"></div>
         <div class="auth-btns">
           <button class="auth-btn auth-apple" id="btn-apple" disabled title="Coming soon — requires Apple Developer enrollment">
@@ -586,13 +586,13 @@ input,textarea{font-family:inherit}
             Continue with Email
           </button>
         </div>
-        <p class="legal">By continuing you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>.<br>AlyInvest never executes trades or holds your money.</p>
+        <p class="legal">By continuing you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>.<br>Nera never executes trades or holds your money.</p>
       </div>
 
       <!-- EMAIL SIGN UP / SIGN IN -->
       <div class="flow-screen" data-screen="signup">
         <div style="font-size:13px;color:var(--muted);margin-bottom:8px" id="signup-eyebrow">Create account</div>
-        <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px" id="signup-heading">Welcome to AlyInvest.</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px" id="signup-heading">Welcome to Nera.</div>
         <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Your data is encrypted and never shared.</div>
         <div class="auth-error" id="signup-error"></div>
         <input type="email" class="ob-text" placeholder="Email address" style="margin-bottom:10px" id="su-email">
@@ -604,10 +604,10 @@ input,textarea{font-family:inherit}
 
       <!-- ADVISOR INTRO -->
       <div class="flow-screen" data-screen="intro">
-        <div class="intro-av">A</div>
-        <div class="intro-label">Alex · Your Advisor</div>
+        <div class="intro-av">N</div>
+        <div class="intro-label">Nera · Your Advisor</div>
         <div class="intro-bubble">
-          <p>Hi, I'm Alex — your personal investment advisor.</p>
+          <p>Hi, I'm Nera — your personal investment advisor.</p>
           <p>I'll analyze your portfolio, explain every recommendation in plain language, and remember everything we discuss. Over time, I'll understand your goals better than any algorithm.</p>
           <p>Before we begin, I'd like to ask you a few questions so I can personalize everything for you.</p>
         </div>
@@ -625,7 +625,7 @@ input,textarea{font-family:inherit}
         <div style="font-size:14px;color:var(--muted);margin-bottom:20px">I need to see your holdings to give you accurate advice.</div>
         <div class="connect-readonly">
           <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <div class="connect-ro-txt"><strong>Read-only access, always.</strong> AlyInvest never executes trades, never holds money, and never moves assets. We only read your portfolio data to provide analysis.</div>
+          <div class="connect-ro-txt"><strong>Read-only access, always.</strong> Nera never executes trades, never holds money, and never moves assets. We only read your portfolio data to provide analysis.</div>
         </div>
         <div class="broker-list">
           <button class="broker-opt" onclick="App.pickBroker(this,'t212')">
@@ -663,10 +663,10 @@ input,textarea{font-family:inherit}
         <div class="topbar-logomark">
           <svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg>
         </div>
-        <span class="topbar-name">AlyInvest</span>
+        <span class="topbar-name">Nera</span>
       </div>
       <div class="topbar-center">
-        <span class="topbar-advisor">Your Advisor · Alex</span>
+        <span class="topbar-advisor">Your Advisor · Nera</span>
         <span class="topbar-online">Active now</span>
       </div>
       <div class="topbar-right">
@@ -826,7 +826,7 @@ App.toggleAuthMode = function() {
   App.st.authMode = App.st.authMode === 'signup' ? 'signin' : 'signup';
   const isSignup = App.st.authMode === 'signup';
   document.getElementById('signup-eyebrow').textContent = isSignup ? 'Create account' : 'Welcome back';
-  document.getElementById('signup-heading').textContent = isSignup ? 'Welcome to AlyInvest.' : 'Sign in to AlyInvest.';
+  document.getElementById('signup-heading').textContent = isSignup ? 'Welcome to Nera.' : 'Sign in to Nera.';
   document.getElementById('signup-submit').textContent = isSignup ? 'Create Account' : 'Sign In';
   document.getElementById('signup-toggle').innerHTML = isSignup
     ? 'Already have an account? <a onclick="App.toggleAuthMode()">Sign in</a>'
@@ -993,7 +993,7 @@ App.renderBrokerForm = function(broker) {
   } else if (broker === 'ibkr') {
     host.innerHTML = `
       <div class="broker-form">
-        <div class="broker-form-note">Requires the AlyInvest IBKR bridge running next to a logged-in Client Portal Gateway (see /ibkr-bridge in the repo). Enter its public URL and shared secret.</div>
+        <div class="broker-form-note">Requires the Nera IBKR bridge running next to a logged-in Client Portal Gateway (see /ibkr-bridge in the repo). Enter its public URL and shared secret.</div>
         <input type="text" class="ob-text" style="margin-bottom:0" id="ibkr-url" placeholder="https://your-bridge-url">
         <input type="password" class="ob-text" style="margin-bottom:0" id="ibkr-secret" placeholder="Bridge shared secret">
         <div class="field-error" id="ibkr-error" style="display:none"></div>
@@ -1186,7 +1186,7 @@ App.manageBrokerConnection = function() {
 };
 
 App.disconnectBroker = async function() {
-  if (!confirm('Disconnect this broker? AlyInvest will fall back to the demo portfolio.')) return;
+  if (!confirm('Disconnect this broker? Nera will fall back to the demo portfolio.')) return;
   await App.apiFetch('/api/disconnect-broker', { method: 'POST' });
   App.loadAll();
 };
@@ -1218,7 +1218,7 @@ function $m(html) {
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
 function bubbleA(text) {
-  return `<div class="msg advisor msg-in"><div class="msg-av">A</div><div class="msg-bubble">${esc(text).replace(/\n/g,'<br>')}</div></div>`;
+  return `<div class="msg advisor msg-in"><div class="msg-av">N</div><div class="msg-bubble">${esc(text).replace(/\n/g,'<br>')}</div></div>`;
 }
 function bubbleU(text) {
   return `<div class="msg user msg-in"><div class="msg-av">AC</div><div class="msg-bubble">${esc(text)}</div></div>`;
@@ -1333,7 +1333,7 @@ App.send = async function() {
 
 function showTyping() {
   const msgs = document.getElementById('messages');
-  msgs.insertAdjacentHTML('beforeend', `<div id="typing-row" class="msg advisor"><div class="msg-av">A</div><div class="msg-bubble" style="padding:0"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`);
+  msgs.insertAdjacentHTML('beforeend', `<div id="typing-row" class="msg advisor"><div class="msg-av">N</div><div class="msg-bubble" style="padding:0"><div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`);
   msgs.scrollTop = msgs.scrollHeight;
 }
 function hideTyping() {
@@ -1529,7 +1529,7 @@ App.renderSettings = function() {
           <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
           </div>
-          <div><div class="s-row-lbl">Alex</div><div class="s-row-sub">Powered by claude-sonnet-5 · reviews every 24h, risk scan every 2h</div></div>
+          <div><div class="s-row-lbl">Nera</div><div class="s-row-sub">Powered by claude-sonnet-5 · reviews every 24h, risk scan every 2h</div></div>
         </div>
         <span style="font-size:11px;font-weight:600;color:var(--gold);background:var(--gold-dim);padding:3px 9px;border-radius:999px">Live</span>
       </div>
@@ -1591,7 +1591,7 @@ App.renderSettings = function() {
     </div>
 
     <div style="padding:6px 2px 4px;font-size:11px;color:var(--subtle);text-align:center;line-height:1.55">
-      Analysis only — AlyInvest never places trades, holds money, or moves assets. Market data is simulated for this prototype. All recommendations are for informational purposes only and do not constitute financial advice.
+      Analysis only — Nera never places trades, holds money, or moves assets. Market data is simulated for this prototype. All recommendations are for informational purposes only and do not constitute financial advice.
     </div>
   `;
 };
