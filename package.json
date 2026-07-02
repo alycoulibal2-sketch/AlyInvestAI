@@ -4,6 +4,7 @@
   "description": "Dependency manifest for Netlify Functions (netlify/functions/) — bundled automatically by Netlify's build.",
   "dependencies": {
     "@netlify/blobs": "^8.1.0",
+    "stripe": "^22.3.0",
     "web-push": "^3.6.7"
   }
 }

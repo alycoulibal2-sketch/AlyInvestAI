@@ -60,10 +60,24 @@ export async function markWelcomeSeen(userId) {
   return m;
 }
 
-export async function subscribe(userId) {
+export async function subscribe(userId, stripeInfo) {
   const m = await ensure(userId);
   m.status = 'subscribed';
   m.subscribedAt = new Date().toISOString();
+  if (stripeInfo) {
+    m.stripeCustomerId = stripeInfo.customerId || m.stripeCustomerId;
+    m.stripeSubscriptionId = stripeInfo.subscriptionId || m.stripeSubscriptionId;
+  }
+  await save(userId, m);
+  return m;
+}
+
+// Subscription ended (cancelled or payment ultimately failed). Not a lockout:
+// data, timeline and Advisor Memory stay intact — same as a lapsed founding.
+export async function unsubscribe(userId) {
+  const m = await ensure(userId);
+  m.status = 'lapsed';
+  m.stripeSubscriptionId = null;
   await save(userId, m);
   return m;
 }

@@ -9,12 +9,11 @@ export default withAuth(async (req, context, user) => {
     return Response.json(membership.toPublic(m));
   }
 
+  // Direct activation is retired: Premium is only granted by the Stripe
+  // webhook after verified payment. Old clients calling this get pointed
+  // at the real checkout flow.
   if (action === 'subscribe') {
-    // NOTE: no payment processor is wired yet — this activates the plan
-    // directly. When Stripe (or similar) is connected, this endpoint should
-    // only flip status after a verified checkout/webhook.
-    const m = await membership.subscribe(user.id);
-    return Response.json(membership.toPublic(m));
+    return Response.json({ error: 'Use /api/billing/checkout — subscriptions activate after payment.', code: 'use_checkout' }, { status: 410 });
   }
 
   return Response.json({ error: 'Unknown action' }, { status: 404 });

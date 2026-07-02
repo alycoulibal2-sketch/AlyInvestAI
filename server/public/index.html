@@ -1079,6 +1079,7 @@ App.afterSignIn = async function() {
     App.st.onboarded = true;
     document.getElementById('app').classList.remove('is-flow');
     await App.loadAll();
+    App.handleBillingReturn(); // no-op unless we just came back from Stripe Checkout
   } else {
     App.showFlow('intro');
   }
@@ -1490,22 +1491,65 @@ App.showPaywall = function() {
   `);
 };
 
+// Hands off to Stripe Checkout. Membership flips to subscribed only when
+// Stripe's webhook confirms payment; on return we poll for that.
 App.subscribe = async function(btn) {
-  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Activating…'; }
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Opening secure checkout…'; }
   try {
-    const m = await App.apiFetch('/api/membership/subscribe', { method: 'POST' }).then(r => r.json());
-    App.membership = m;
-    document.getElementById('paused-banner').classList.remove('show');
-    openGlass(`
-      <div class="fb-success">
-        <div class="fb-success-ico">${CHECK_SVG}</div>
-        <div class="glass-title" style="margin-top:0;font-size:24px">Welcome to Premium.</div>
-        <div class="glass-sub">Your advisor is back to watching your portfolio every day.<br>Thank you for being part of Corvexsa.</div>
-      </div>
-      <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass(); App.loadAll();">Continue</button>
-    `);
+    const res = await App.apiFetch('/api/billing/checkout', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || 'Checkout unavailable');
+    window.location.href = data.url; // Stripe-hosted checkout
   } catch (e) {
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Continue with Premium'; }
+  }
+};
+
+// Back from Stripe: ?billing=success — the webhook usually lands within a
+// couple of seconds; poll membership briefly, then celebrate.
+App.handleBillingReturn = async function() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('billing')) return;
+  const outcome = q.get('billing');
+  history.replaceState(null, '', location.pathname); // clean the URL either way
+  if (outcome !== 'success') return;
+  for (let i = 0; i < 10; i++) {
+    try {
+      const m = await App.apiFetch('/api/membership').then(r => r.json());
+      if (m.status === 'subscribed') {
+        App.membership = m;
+        document.getElementById('paused-banner').classList.remove('show');
+        App.renderSettings();
+        openGlass(`
+          <div class="fb-success">
+            <div class="fb-success-ico">${CHECK_SVG}</div>
+            <div class="glass-title" style="margin-top:0;font-size:24px">Welcome to Premium.</div>
+            <div class="glass-sub">Your subscription is active. Your advisor is watching your portfolio every day.<br>Thank you for being part of Corvexsa.</div>
+          </div>
+          <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass(); App.loadAll();">Continue</button>
+        `);
+        return;
+      }
+    } catch (e) { /* keep polling */ }
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  // Payment went through but the webhook is slow — reassure, don't alarm.
+  openGlass(`
+    <div class="glass-title" style="font-size:22px;text-align:center">Payment received</div>
+    <div class="glass-sub" style="text-align:center">Your Premium access is activating — it can take a minute. You can keep using Corvexsa; this will update on its own.</div>
+    <button class="flow-btn" style="margin-top:20px" onclick="App.closeGlass()">Continue</button>
+  `);
+};
+
+App.openBillingPortal = async function(btn) {
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+  try {
+    const res = await App.apiFetch('/api/billing/portal', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || 'Portal unavailable');
+    window.location.href = data.url;
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
 };
 
@@ -2054,6 +2098,7 @@ function membershipCardHtml() {
         </div>
         <span style="font-size:11px;font-weight:600;color:var(--green)">Active</span>
       </div>
+      <button class="mini-btn" style="margin-top:10px;width:100%" onclick="App.openBillingPortal(this)">Manage subscription</button>
     </div>`;
   }
   return `
