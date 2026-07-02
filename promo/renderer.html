@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AlyInvest Promo Renderer</title>
+<style>
+  :root{
+    --bg:#07080c;
+    --surface:#161820;
+    --text:#e8eaf0;
+    --muted:rgba(232,234,240,.55);
+    --gold:#C7A867;
+    --gold-dim:rgba(199,168,103,.13);
+    --sky:#6FA8DC;
+    --green:#4BAE8A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{margin:0;padding:0;background:#000;overflow:hidden;}
+  body{font-family:-apple-system,"Segoe UI",system-ui,sans-serif;}
+  #stage{
+    position:fixed;top:0;left:0;
+    width:1280px;height:720px;
+    background:var(--bg);
+    overflow:hidden;
+  }
+  /* ---------- background dressing ---------- */
+  #glow{
+    position:absolute;top:-260px;left:50%;
+    width:1100px;height:700px;
+    transform:translateX(-50%);
+    background:radial-gradient(ellipse at center, rgba(199,168,103,.10) 0%, rgba(199,168,103,.04) 40%, rgba(199,168,103,0) 70%);
+    pointer-events:none;z-index:1;
+  }
+  #particles{position:absolute;inset:0;z-index:2;pointer-events:none;}
+  .dust{
+    position:absolute;top:0;left:0;
+    border-radius:50%;
+    background:var(--gold);
+    will-change:transform,opacity;
+  }
+  #vignette{
+    position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%);
+  }
+  /* ---------- scenes ---------- */
+  #scenes{position:absolute;inset:0;z-index:10;}
+  .scene{
+    position:absolute;inset:0;
+    opacity:0;
+    pointer-events:none;
+  }
+  .anim{will-change:transform,opacity;}
+  /* logo tile */
+  .logo-tile{
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#1d1f29,#12141b);
+    border:1px solid rgba(199,168,103,.35);
+    box-shadow:0 8px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  /* ----- hook template ----- */
+  .t-hook{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .t-hook .hairline{
+    width:120px;height:1px;margin:18px 0 26px;
+    background:linear-gradient(90deg, rgba(199,168,103,0), rgba(199,168,103,.7), rgba(199,168,103,0));
+  }
+  .t-hook .headline{
+    font-size:52px;font-weight:700;letter-spacing:-1px;
+    color:var(--text);max-width:900px;line-height:1.15;
+  }
+  .t-hook .sub{
+    margin-top:20px;font-size:22px;color:var(--muted);max-width:820px;line-height:1.5;
+  }
+  /* ----- showcase template ----- */
+  .t-showcase{display:flex;align-items:center;}
+  .t-showcase .col-left{
+    width:46%;padding-left:90px;padding-right:24px;
+  }
+  .t-showcase .kicker{
+    font-size:13px;font-weight:600;letter-spacing:3px;
+    text-transform:uppercase;color:var(--gold);margin-bottom:16px;
+  }
+  .t-showcase .headline{
+    font-size:44px;font-weight:700;letter-spacing:-1px;
+    color:var(--text);line-height:1.12;
+  }
+  .t-showcase .sub{
+    margin-top:16px;font-size:20px;color:var(--muted);line-height:1.55;
+  }
+  .t-showcase .underbar{
+    width:42px;height:3px;background:var(--gold);border-radius:2px;margin-top:22px;
+  }
+  .t-showcase .col-right{
+    width:54%;display:flex;align-items:center;justify-content:center;
+  }
+  .media-card{overflow:hidden;position:relative;}
+  .media-wide{
+    width:660px;height:430px;border-radius:16px;
+    border:1px solid rgba(255,255,255,.09);
+    background:var(--surface);
+    box-shadow:0 40px 90px rgba(0,0,0,.65), 0 10px 30px rgba(0,0,0,.5);
+    transform:rotate(-1.2deg);
+  }
+  .media-phone{
+    width:330px;height:620px;border-radius:30px;
+    background:#1a1c24;padding:10px;
+    border:1px solid rgba(255,255,255,.09);
+    box-shadow:0 45px 100px rgba(0,0,0,.7), 0 12px 35px rgba(0,0,0,.55);
+  }
+  .media-phone .phone-screen{
+    width:100%;height:100%;border-radius:21px;overflow:hidden;
+    background:var(--surface);position:relative;
+  }
+  .media-wide .kb-clip{
+    position:absolute;inset:0;border-radius:16px;overflow:hidden;
+  }
+  .kb-img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    transform-origin:50% 50%;
+    will-change:transform;
+  }
+  /* ----- cta template ----- */
+  .t-cta{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .t-cta .name{
+    margin-top:26px;font-size:54px;font-weight:700;letter-spacing:-1px;color:var(--text);
+  }
+  .t-cta .sub{
+    margin-top:14px;font-size:22px;color:var(--muted);max-width:760px;line-height:1.5;
+  }
+  .t-cta .pill{
+    margin-top:34px;
+    display:inline-block;
+    background:var(--gold);color:#12141b;
+    font-size:18px;font-weight:600;
+    padding:14px 34px;border-radius:999px;
+    box-shadow:0 10px 40px rgba(199,168,103,.3);
+  }
+  .t-cta .disclaimer{
+    position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+    width:900px;max-width:900px;
+    font-size:13px;color:rgba(232,234,240,.35);line-height:1.45;text-align:center;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="glow"></div>
+  <div id="particles"></div>
+  <div id="vignette"></div>
+  <div id="scenes"></div>
+</div>
+
+<script src="timeline.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- data ---------------- */
+
+  var FALLBACK = {
+    width: 1280,
+    height: 720,
+    total: 12,
+    scenes: [
+      {
+        id: "hook", template: "hook", start: 0, end: 4.5,
+        headline: "Your wealth deserves more than a spreadsheet.",
+        sub: "AlyInvest is the AI wealth platform built around you.",
+        imageStyle: "none"
+      },
+      {
+        id: "portfolio", template: "showcase", start: 4.0, end: 8.5,
+        headline: "One engine. Every number, deterministic.",
+        sub: "AI reasons. The engine owns the math. You stay in control.",
+        image: "demo.png", imageStyle: "phone"
+      },
+      {
+        id: "cta", template: "cta", start: 8.0, end: 12,
+        headline: "AlyInvest",
+        sub: "Institutional-grade intelligence, made personal.",
+        imageStyle: "none",
+        disclaimer: "For illustration only. Not investment advice. Investing involves risk, including possible loss of principal."
+      }
+    ]
+  };
+
+  var TL = (typeof window.TIMELINE === "object" && window.TIMELINE && window.TIMELINE.scenes)
+    ? window.TIMELINE
+    : FALLBACK;
+  window.TIMELINE = TL;
+  window.TOTAL = TL.total;
+
+  var W = TL.width || 1280;
+  var H = TL.height || 720;
+
+  /* ---------------- helpers ---------------- */
+
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+  function easeOutCubic(p) { p = clamp(p, 0, 1); return 1 - Math.pow(1 - p, 3); }
+
+  // progress of lt within [a,b], eased
+  function ramp(lt, a, b) { return easeOutCubic((lt - a) / (b - a)); }
+
+  function el(tag, cls, parent) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  var LOGO_UID = 0;
+  function logoTile(sizePx) {
+    var tile = document.createElement("div");
+    tile.className = "logo-tile";
+    tile.style.width = sizePx + "px";
+    tile.style.height = sizePx + "px";
+    tile.style.borderRadius = Math.round(sizePx * 0.27) + "px";
+    var gid = "goldGrad" + (LOGO_UID++);
+    var inner = Math.round(sizePx * 0.62);
+    tile.innerHTML =
+      '<svg width="' + inner + '" height="' + inner + '" viewBox="0 0 34 34">' +
+      '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#9a7830"/><stop offset="1" stop-color="#C7A867"/>' +
+      '</linearGradient></defs>' +
+      '<path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z" fill="url(#' + gid + ')"/>' +
+      '</svg>';
+    return tile;
+  }
+
+  /* ---------------- particles ---------------- */
+
+  var N_DUST = 24;
+  var dust = [];
+  (function makeDust() {
+    var layer = document.getElementById("particles");
+    for (var i = 0; i < N_DUST; i++) {
+      var d = el("div", "dust", layer);
+      var size = 2 + (i % 4);
+      d.style.width = size + "px";
+      d.style.height = size + "px";
+      dust.push(d);
+    }
+  })();
+
+  function layoutDust(t) {
+    for (var i = 0; i < N_DUST; i++) {
+      var speed = 10 * (1 + (i % 3));
+      var x = ((i * 173 + t * speed) % W + W) % W;
+      var baseY = ((i * 271 + 37) % H);
+      var y = ((baseY + 18 * Math.sin(t * 0.35 + i * 1.7)) % H + H) % H;
+      var op = 0.05 + 0.13 * (0.5 + 0.5 * Math.sin(t * 0.5 + i * 2.3));
+      dust[i].style.transform = "translate(" + x.toFixed(2) + "px," + y.toFixed(2) + "px)";
+      dust[i].style.opacity = op.toFixed(3);
+    }
+  }
+
+  /* ---------------- scene DOM ---------------- */
+
+  function attachImg(container, scene) {
+    var img = document.createElement("img");
+    img.className = "kb-img";
+    img.alt = "";
+    img.onerror = function () {
+      var card = container.closest ? container.closest(".media-card") : null;
+      if (card) card.style.display = "none";
+      else container.style.display = "none";
+    };
+    img.src = scene.image || "";
+    container.appendChild(img);
+    return img;
+  }
+
+  function buildHook(scene, root) {
+    var wrap = el("div", "t-hook scene", root);
+    var head = el("div", "anim", wrap);
+    head.appendChild(logoTile(44));
+    var hair = el("div", "hairline anim", wrap);
+    var h = el("div", "headline anim", wrap);
+    h.textContent = scene.headline || "";
+    var s = el("div", "sub anim", wrap);
+    s.textContent = scene.sub || "";
+    return { rootEl: wrap, headline: [head, hair, h], sub: [s], media: [], img: null };
+  }
+
+  function buildShowcase(scene, root) {
+    var wrap = el("div", "t-showcase scene", root);
+    var left = el("div", "col-left", wrap);
+    var k = el("div", "kicker anim", left);
+    k.textContent = (scene.kicker || scene.id || "").toString().replace(/[-_]/g, " ");
+    var h = el("div", "headline anim", left);
+    h.textContent = scene.headline || "";
+    var s = el("div", "sub anim", left);
+    s.textContent = scene.sub || "";
+    var bar = el("div", "underbar anim", left);
+
+    var right = el("div", "col-right", wrap);
+    var img = null;
+    var card = null;
+    if (scene.imageStyle === "phone") {
+      card = el("div", "media-card media-phone anim", right);
+      var screen = el("div", "phone-screen", card);
+      img = attachImg(screen, scene);
+    } else if (scene.imageStyle === "wide") {
+      card = el("div", "media-card media-wide anim", right);
+      var clip = el("div", "kb-clip", card);
+      img = attachImg(clip, scene);
+    }
+    return {
+      rootEl: wrap,
+      headline: [k, h],
+      sub: [s, bar],
+      media: card ? [card] : [],
+      img: img
+    };
+  }
+
+  function buildCta(scene, root) {
+    var wrap = el("div", "t-cta scene", root);
+    var logoWrap = el("div", "anim", wrap);
+    logoWrap.appendChild(logoTile(88));
+    var name = el("div", "name anim", wrap);
+    name.textContent = scene.headline || "AlyInvest";
+    var s = el("div", "sub anim", wrap);
+    s.textContent = scene.sub || "";
+    var pill = el("div", "pill anim", wrap);
+    pill.textContent = "alyinvestai.netlify.app";
+    if (scene.disclaimer) {
+      var dis = el("div", "disclaimer", wrap);
+      dis.textContent = scene.disclaimer;
+    }
+    return { rootEl: wrap, headline: [logoWrap, name], sub: [s], media: [pill], img: null };
+  }
+
+  var builders = { hook: buildHook, showcase: buildShowcase, cta: buildCta };
+
+  var sceneNodes = [];
+  (function buildAll() {
+    var root = document.getElementById("scenes");
+    for (var i = 0; i < TL.scenes.length; i++) {
+      var sc = TL.scenes[i];
+      var builder = builders[sc.template] || buildHook;
+      var node = builder(sc, root);
+      node.scene = sc;
+      sceneNodes.push(node);
+    }
+  })();
+
+  /* ---------------- seek ---------------- */
+
+  function applyReveal(elems, lt, a, b, dy) {
+    var p = ramp(lt, a, b);
+    var y = dy * (1 - p);
+    for (var i = 0; i < elems.length; i++) {
+      elems[i].style.opacity = p.toFixed(4);
+      elems[i].style.transform = "translateY(" + y.toFixed(2) + "px)";
+    }
+  }
+
+  window.seek = function (t) {
+    t = clamp(Number(t) || 0, 0, TL.total);
+    layoutDust(t);
+
+    for (var i = 0; i < sceneNodes.length; i++) {
+      var node = sceneNodes[i];
+      var sc = node.scene;
+      var visible = t >= sc.start && t < sc.end;
+      // include exact end-of-video edge for the final scene
+      if (!visible && t === TL.total && Math.abs(sc.end - TL.total) < 1e-9) visible = true;
+
+      if (!visible) {
+        node.rootEl.style.opacity = "0";
+        node.rootEl.style.display = "none";
+        continue;
+      }
+      node.rootEl.style.display = "";
+
+      var lt = t - sc.start;
+      var dur = sc.end - sc.start;
+
+      // scene crossfade opacity
+      var op = 1;
+      if (lt < 0.5) op = clamp(lt / 0.5, 0, 1);
+      var rem = sc.end - t;
+      if (rem < 0.5) op = Math.min(op, clamp(rem / 0.5, 0, 1));
+      node.rootEl.style.opacity = op.toFixed(4);
+
+      // text + media reveals
+      applyReveal(node.headline, lt, 0.15, 0.85, 26);
+      applyReveal(node.sub, lt, 0.45, 1.15, 26);
+      applyReveal(node.media, lt, 0.35, 1.15, 34);
+
+      // Ken Burns on the inner image, across full scene duration
+      if (node.img) {
+        var kp = dur > 0 ? clamp(lt / dur, 0, 1) : 0;
+        var scale = 1.06 + 0.08 * kp;
+        var ty = -2 * kp; // percent
+        node.img.style.transform = "scale(" + scale.toFixed(4) + ") translateY(" + ty.toFixed(3) + "%)";
+      }
+    }
+  };
+
+  /* ---------------- boot / URL params ---------------- */
+
+  var params;
+  try { params = new URLSearchParams(window.location.search); }
+  catch (e) { params = { get: function () { return null; } }; }
+
+  var t0 = parseFloat(params.get("t"));
+  window.seek(isFinite(t0) ? t0 : 0);
+
+  if (params.get("play") === "1") {
+    var startWall = performance.now();
+    var tick = function (now) {
+      var t = ((now - startWall) / 1000) % TL.total;
+      window.seek(t);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+})();
+</script>
+</body>
+</html>
