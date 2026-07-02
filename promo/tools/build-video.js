@@ -46,32 +46,26 @@ run([
   '-c:a', 'pcm_s16le', path.join(PROMO, '_vo.wav'),
 ], 'voiceover placement');
 
-// ── 3. Ambient pad: three soft detuned tones, slow tremolo, dark lowpass ──
-run([
-  '-f', 'lavfi', '-i', `sine=frequency=55:sample_rate=44100:duration=${total}`,
-  '-f', 'lavfi', '-i', `sine=frequency=110.5:sample_rate=44100:duration=${total}`,
-  '-f', 'lavfi', '-i', `sine=frequency=164.8:sample_rate=44100:duration=${total}`,
-  '-filter_complex',
-  '[0:a]volume=0.5[a0];[1:a]volume=0.34[a1];[2:a]volume=0.22[a2];' +
-  '[a0][a1][a2]amix=inputs=3:normalize=0,' +
-  'tremolo=f=0.13:d=0.55,lowpass=f=520,' +
-  `afade=t=in:d=2.5,afade=t=out:st=${(total - 3.5).toFixed(2)}:d=3.5,volume=0.05[pad]`,
-  '-map', '[pad]', '-c:a', 'pcm_s16le', path.join(PROMO, '_pad.wav'),
-], 'ambient pad');
+// ── 3. Background music (synthesized by compose-music.js) ──
+const { execFileSync: exec2 } = require('child_process');
+exec2(process.execPath, [path.join(__dirname, 'compose-music.js')], { stdio: 'inherit' });
 
-// ── 4. Final mux ────────────────────────────────────────
+// ── 4. Final mux: music auto-ducks under the narration ──
 run([
   '-i', path.join(PROMO, '_video.mp4'),
   '-i', path.join(PROMO, '_vo.wav'),
-  '-i', path.join(PROMO, '_pad.wav'),
+  '-i', path.join(PROMO, 'music.wav'),
   '-filter_complex',
-  '[1:a][2:a]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11[a]',
+  '[1:a]asplit=2[vo][sc];' +
+  '[2:a]volume=0.85[m];' +
+  '[m][sc]sidechaincompress=threshold=0.02:ratio=7:attack=60:release=450[duck];' +
+  '[vo][duck]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11[a]',
   '-map', '0:v', '-map', '[a]',
   '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k',
   '-shortest', OUT,
-], 'final mux');
+], 'final mux (sidechain-ducked music)');
 
-['_video.mp4', '_vo.wav', '_pad.wav'].forEach(f => fs.rmSync(path.join(PROMO, f), { force: true }));
+['_video.mp4', '_vo.wav'].forEach(f => fs.rmSync(path.join(PROMO, f), { force: true }));
 
 const stat = fs.statSync(OUT);
 console.log(`\nDONE: ${OUT} (${(stat.size / 1024 / 1024).toFixed(1)} MB, ${total.toFixed(1)}s)`);

@@ -1,7 +1,7 @@
 {
   "width": 1280,
   "height": 720,
-  "total": 73.036,
+  "total": 44.942,
   "scenes": [
     {
       "id": "hook",
@@ -10,10 +10,10 @@
       "imageStyle": "none",
       "headline": "Who watches your portfolio?",
       "sub": "Most investors are on their own. You don't have to be.",
-      "voiceover": "What if a personal wealth advisor watched your portfolio around the clock, and told you exactly why every move matters?",
+      "voiceover": "What if a personal wealth advisor watched your portfolio around the clock?",
       "start": 0,
-      "end": 9.012,
-      "voStart": 0.6
+      "end": 5.342,
+      "voStart": 0.45
     },
     {
       "id": "meet",
@@ -21,12 +21,12 @@
       "image": "welcome.png",
       "imageStyle": "wide",
       "kicker": "Introducing",
-      "headline": "Meet AlyInvest",
+      "headline": "Meet Corvexsa",
       "sub": "Your personal AI investment advisor",
-      "voiceover": "Meet AlyInvest. Your personal AI investment advisor. Calm, precise, and entirely on your side.",
-      "start": 8.512,
-      "end": 19.348,
-      "voStart": 9.112
+      "voiceover": "Meet Corvexsa — your personal AI investment advisor.",
+      "start": 4.892,
+      "end": 9.826,
+      "voStart": 5.342
     },
     {
       "id": "connect",
@@ -36,10 +36,10 @@
       "kicker": "Your money stays yours",
       "headline": "Read-only. Always.",
       "sub": "Never holds funds. Never executes trades. Only advises.",
-      "voiceover": "Connect your broker in seconds. Read-only, always. AlyInvest never touches your money. It watches, and it advises.",
-      "start": 18.848,
-      "end": 31.604,
-      "voStart": 19.448
+      "voiceover": "Connect your broker in seconds. Read-only, always — Corvexsa never touches your money.",
+      "start": 9.376,
+      "end": 16.782,
+      "voStart": 9.826
     },
     {
       "id": "analysis",
@@ -48,11 +48,11 @@
       "imageStyle": "wide",
       "kicker": "Every 24 hours",
       "headline": "A deep review, daily",
-      "sub": "Clear buy, hold, or trim guidance — with the reasoning behind it",
-      "voiceover": "Every twenty-four hours, AlyInvest reviews everything you hold. Clear buy, hold, or trim calls, with share quantities, confidence scores, and plain-language reasoning.",
-      "start": 31.104,
-      "end": 44.82,
-      "voStart": 31.704
+      "sub": "Clear buy, hold, or trim calls — with the reasoning behind them",
+      "voiceover": "Every twenty-four hours, a deep review: clear buy, hold, or trim calls, with exact quantities and the reasoning.",
+      "start": 16.332,
+      "end": 24.914,
+      "voStart": 16.782
     },
     {
       "id": "alerts",
@@ -62,10 +62,10 @@
       "kicker": "Always watching",
       "headline": "Vigilance, delivered",
       "sub": "Opportunities surfaced. Risks flagged early.",
-      "voiceover": "AlyInvest scans the market for what you might otherwise miss, and alerts your phone when something material changes.",
-      "start": 44.32,
-      "end": 53.308,
-      "voStart": 44.92
+      "voiceover": "It scans the market, and alerts your phone the moment something material changes.",
+      "start": 24.464,
+      "end": 30.334,
+      "voStart": 24.914
     },
     {
       "id": "conversation",
@@ -75,23 +75,23 @@
       "kicker": "No dashboards to decode",
       "headline": "One conversation",
       "sub": "An advisor that remembers you, your goals, your preferences",
-      "voiceover": "No dashboards to decode. Just one conversation with an advisor who remembers your goals, like texting your own wealth manager.",
-      "start": 52.808,
-      "end": 63.452,
-      "voStart": 53.408
+      "voiceover": "No dashboards. Just one conversation, with an advisor who remembers you.",
+      "start": 29.884,
+      "end": 36.714,
+      "voStart": 30.334
     },
     {
       "id": "cta",
       "template": "cta",
       "image": "",
       "imageStyle": "none",
-      "headline": "AlyInvest",
+      "headline": "Corvexsa",
       "sub": "Smarter investing starts with a conversation.",
-      "voiceover": "Smarter investing starts with a conversation. Start yours with AlyInvest today.",
-      "disclaimer": "AlyInvest provides analysis only. It never executes trades or holds funds. Investing involves risk, including possible loss of principal. Not financial advice.",
-      "start": 62.952,
-      "end": 73.036,
-      "voStart": 63.552
+      "voiceover": "Smarter investing starts with a conversation. Start yours at Corvexsa dot com.",
+      "disclaimer": "Corvexsa provides analysis only. It never executes trades or holds funds. Investing involves risk, including possible loss of principal. Not financial advice.",
+      "start": 36.264,
+      "end": 44.942,
+      "voStart": 36.714
     }
   ]
 }

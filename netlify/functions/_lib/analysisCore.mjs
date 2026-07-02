@@ -5,7 +5,9 @@ import * as claude from './claude.mjs';
 import * as push from './push.mjs';
 import * as notifications from './notifications.mjs';
 
-function store() { return getStore('alyinvest'); }
+// strong consistency: reads reflect writes immediately (default is eventual,
+// which made a just-run analysis vanish on the next read-after-write)
+function store() { return getStore({ name: 'alyinvest', consistency: 'strong' }); }
 const k = (userId) => `${userId}:analysis-log`;
 
 async function loadLog(userId) {

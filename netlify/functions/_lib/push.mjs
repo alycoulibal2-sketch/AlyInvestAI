@@ -20,7 +20,9 @@ if (VAPID_CONFIGURED) {
   console.warn('[push] VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY not set — push notifications are disabled.');
 }
 
-function store() { return getStore('alyinvest'); }
+// strong consistency: reads reflect writes immediately (default is eventual,
+// which made a just-run analysis vanish on the next read-after-write)
+function store() { return getStore({ name: 'alyinvest', consistency: 'strong' }); }
 const k = (userId) => `${userId}:subscriptions`;
 
 export async function loadSubs(userId) {

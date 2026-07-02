@@ -4,7 +4,9 @@
 
 import { getStore } from '@netlify/blobs';
 
-function store() { return getStore('alyinvest'); }
+// strong consistency: reads reflect writes immediately (default is eventual,
+// which made a just-run analysis vanish on the next read-after-write)
+function store() { return getStore({ name: 'alyinvest', consistency: 'strong' }); }
 
 export async function register(userId) {
   const users = (await store().get('user-registry', { type: 'json' })) || [];

@@ -50,7 +50,9 @@ const SECTOR_OF = {
   XOM: 'Energy', CVX: 'Energy',
 };
 
-function store() { return getStore('alyinvest'); }
+// strong consistency: reads reflect writes immediately (default is eventual,
+// which made a just-run analysis vanish on the next read-after-write)
+function store() { return getStore({ name: 'alyinvest', consistency: 'strong' }); }
 const k = (userId, name) => `${userId}:${name}`;
 
 export async function loadUserProfile(userId, authUser) {
