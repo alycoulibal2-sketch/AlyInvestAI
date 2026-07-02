@@ -1,4 +1,4 @@
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-4-8';
+const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
