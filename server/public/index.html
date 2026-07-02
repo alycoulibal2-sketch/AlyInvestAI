@@ -518,6 +518,34 @@ input,textarea{font-family:inherit}
 @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .msg-in{animation:msgIn .22s ease-out forwards}
 
+/* ── RESPONSIVE TOPBAR ── */
+/* The center title is absolutely positioned and collides with the right-side
+   controls on phones — drop it first, then compact the rest by width. */
+@media (max-width: 900px){
+  .topbar-center{display:none}
+}
+@media (max-width: 560px){
+  .topbar{padding:0 12px}
+  .topbar-right{gap:8px}
+  .health-label{display:none}
+  .health-pill{padding:5px 10px}
+}
+@media (max-width: 400px){
+  .topbar-name{display:none}
+}
+
+/* ── LIVE VALUE TICKS ── */
+@keyframes valUp{0%,60%{color:var(--green)}100%{color:var(--text)}}
+@keyframes valDown{0%,60%{color:var(--red)}100%{color:var(--text)}}
+.tick-up{animation:valUp 1.4s ease-out}
+.tick-down{animation:valDown 1.4s ease-out}
+.live-dot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--green);margin-right:5px;vertical-align:1px;
+  animation:liveDotPulse 2s ease-in-out infinite
+}
+@keyframes liveDotPulse{0%,100%{opacity:1}50%{opacity:.35}}
+
 /* ── BOOT / AUTH ── */
 #boot-splash{
   position:fixed;inset:0;z-index:200;background:var(--bg);
@@ -1190,10 +1218,87 @@ App.loadAll = async function(opts) {
   App.notifs = notifs;
   App.latestAnalysis = latest;
   App.brokerStatus = brokerStatus;
+  App.st.lastSync = new Date().toISOString();
   document.getElementById('health-score').textContent = latest ? latest.portfolioHealthScore : '—';
   App.renderConvo(latest);
   App.renderNotifs();
   App.renderSettings();
+  App.startLiveRefresh();
+};
+
+// ─── LIVE PORTFOLIO REFRESH ──────────────────────────────
+// Re-pulls /api/portfolio on an interval (each call hits the connected
+// broker fresh — Trading 212 positions/prices, or the demo feed) and ticks
+// the on-screen values in place, T212-style, without re-rendering the
+// settings panel (which would break scrolling).
+const LIVE_REFRESH_MS = 20000;
+
+App.startLiveRefresh = function() {
+  if (App._liveTimer) return;
+  const tick = async () => {
+    if (document.hidden || !App.firebaseUser || !App.st.onboarded) return;
+    try {
+      const res = await App.apiFetch('/api/portfolio');
+      if (!res.ok) return;
+      const fresh = await res.json();
+      const old = App.portfolioView;
+      App.portfolioView = fresh;
+      App.st.lastSync = new Date().toISOString();
+      App.applyLiveValues(old, fresh);
+    } catch (e) { /* transient — next tick will retry */ }
+  };
+  App._liveTimer = setInterval(tick, LIVE_REFRESH_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+};
+
+function flashValue(el, dir) {
+  if (!el || !dir) return;
+  el.classList.remove('tick-up', 'tick-down');
+  void el.offsetWidth; // restart the animation
+  el.classList.add(dir > 0 ? 'tick-up' : 'tick-down');
+}
+
+App.applyLiveValues = function(old, cur) {
+  const body = document.getElementById('settings-body');
+  if (!body || !body.childElementCount) { App.renderSettings(); return; }
+
+  // If the holding set itself changed (new connection, rebalance), re-render.
+  const curKeys = cur.holdings.map(h => h.ticker).join(',');
+  const oldKeys = (old?.holdings || []).map(h => h.ticker).join(',');
+  if (curKeys !== oldKeys) { App.renderSettings(); return; }
+
+  const $ = (n,d=0) => Number(n).toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:d,maximumFractionDigits:d});
+
+  const totalEl = document.getElementById('s-total');
+  if (totalEl) {
+    totalEl.textContent = $(cur.total);
+    if (old && cur.total !== old.total) flashValue(totalEl, cur.total - old.total);
+  }
+  const cashEl = document.getElementById('s-cash');
+  if (cashEl) cashEl.textContent = $(cur.cash);
+
+  const oldBy = {};
+  (old?.holdings || []).forEach(h => { oldBy[h.ticker] = h; });
+  cur.holdings.forEach(h => {
+    const prev = oldBy[h.ticker];
+    const valEl = body.querySelector(`[data-hval="${h.ticker}"]`);
+    if (valEl) {
+      valEl.textContent = $(h.value);
+      if (prev && h.value !== prev.value) flashValue(valEl, h.value - prev.value);
+    }
+    const gainEl = body.querySelector(`[data-hgain="${h.ticker}"]`);
+    if (gainEl) {
+      gainEl.textContent = (h.gainPct >= 0 ? '+' : '') + h.gainPct + '%';
+      gainEl.style.color = h.gainPct >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    const subEl = body.querySelector(`[data-hsub="${h.ticker}"]`);
+    if (subEl) subEl.textContent = `${fmtShares(h.shares)} sh · ${h.weightPct}% of portfolio`;
+  });
+
+  const syncEl = document.getElementById('s-broker-sub');
+  if (syncEl && isLiveBroker(App.brokerStatus)) {
+    syncEl.innerHTML = '<span class="live-dot"></span>Live · updated just now';
+  }
 };
 
 // ─── CONVERSATION ────────────────────────────────────────
@@ -1470,6 +1575,9 @@ App.openNotifs = function() {
 };
 
 // ─── SETTINGS ────────────────────────────────────────────
+function fmtShares(n) { return String(+Number(n).toFixed(4)); }
+function isLiveBroker(bs) { return bs && (bs.type === 'trading212' || bs.type === 'ibkr'); }
+
 App.renderSettings = function() {
   const p = App.portfolioView;
   if (!p) return;
@@ -1480,10 +1588,10 @@ App.renderSettings = function() {
   document.getElementById('settings-body').innerHTML = `
     <div class="port-card">
       <div class="port-card-top">
-        <div><div class="port-val">${$(p.total)}</div><div class="port-lbl">Total portfolio value</div></div>
+        <div><div class="port-val" id="s-total">${$(p.total)}</div><div class="port-lbl">Total portfolio value</div></div>
       </div>
       <div class="port-stats">
-        <div><div class="port-stat-lbl">Cash available</div><div class="port-stat-val">${$(p.cash)}</div></div>
+        <div><div class="port-stat-lbl">Cash available</div><div class="port-stat-val" id="s-cash">${$(p.cash)}</div></div>
         <div><div class="port-stat-lbl">Risk profile</div><div class="port-stat-val">${p.user.riskProfile}</div></div>
       </div>
     </div>
@@ -1497,13 +1605,13 @@ App.renderSettings = function() {
               <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             </div>
             <div>
-              <div class="s-row-lbl">${h.ticker} <span style="font-weight:400;color:var(--muted);font-size:12px">· ${h.name}</span></div>
-              <div class="s-row-sub">${h.shares} sh · ${h.weightPct}% of portfolio</div>
+              <div class="s-row-lbl">${h.ticker}${h.name && h.name !== h.ticker ? ` <span style="font-weight:400;color:var(--muted);font-size:12px">· ${h.name}</span>` : ''}</div>
+              <div class="s-row-sub" data-hsub="${h.ticker}">${fmtShares(h.shares)} sh · ${h.weightPct}% of portfolio</div>
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">${$(h.value)}</div>
-            <div style="font-size:11px;color:${h.gainPct>=0?'var(--green)':'var(--red)'}">${h.gainPct>=0?'+':''}${h.gainPct}%</div>
+            <div data-hval="${h.ticker}" style="font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums">${$(h.value)}</div>
+            <div data-hgain="${h.ticker}" style="font-size:11px;color:${h.gainPct>=0?'var(--green)':'var(--red)'}">${h.gainPct>=0?'+':''}${h.gainPct}%</div>
           </div>
         </div>
       `).join('')}
@@ -1546,7 +1654,9 @@ App.renderSettings = function() {
           </div>
           <div>
             <div class="s-row-lbl">${bs.label}</div>
-            <div class="s-row-sub">${bs.type ? 'Last synced ' + timeAgo(bs.lastSyncedAt) : 'Using the built-in demo portfolio'}</div>
+            <div class="s-row-sub" id="s-broker-sub">${isLiveBroker(bs)
+              ? `<span class="live-dot"></span>Live · updated ${App.st.lastSync ? timeAgo(App.st.lastSync) : 'just now'}`
+              : bs.type ? 'Last synced ' + timeAgo(bs.lastSyncedAt) : 'Using the built-in demo portfolio'}</div>
           </div>
         </div>
         <span style="font-size:11px;font-weight:600;color:${bs.type ? 'var(--green)' : 'var(--subtle)'}">${bs.type ? 'Connected' : 'Demo'}</span>

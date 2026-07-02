@@ -74,19 +74,20 @@ export async function load(userId, authUser) {
   const conn = await brokerConnection.get(userId);
   const user = await loadUserProfile(userId, authUser);
 
-  if (conn.type === 'trading212') {
+  // Live brokers cache their last good snapshot: with the frontend polling
+  // every ~20s, a transient fetch failure (rate limit, network blip) must
+  // show slightly-stale REAL data — never flip the UI to the demo portfolio.
+  if (conn.type === 'trading212' || conn.type === 'ibkr') {
     try {
-      const live = await trading212.verifyAndFetch(conn.apiKey, conn.apiSecret, conn.practice);
+      const live = conn.type === 'trading212'
+        ? await trading212.verifyAndFetch(conn.apiKey, conn.apiSecret, conn.practice)
+        : await ibkr.verifyAndFetch(conn.bridgeUrl, conn.sharedSecret);
+      await store().set(k(userId, 'live-cache'), JSON.stringify({ holdings: live.holdings, cash: live.cash, at: new Date().toISOString() }));
       return { user, cash: live.cash, holdings: live.holdings, _live: true };
     } catch (err) {
-      console.error('[portfolio] Trading 212 fetch failed, falling back to demo:', err.message);
-    }
-  } else if (conn.type === 'ibkr') {
-    try {
-      const live = await ibkr.verifyAndFetch(conn.bridgeUrl, conn.sharedSecret);
-      return { user, cash: live.cash, holdings: live.holdings, _live: true };
-    } catch (err) {
-      console.error('[portfolio] IBKR bridge fetch failed, falling back to demo:', err.message);
+      console.error(`[portfolio] ${conn.type} fetch failed:`, err.message);
+      const cache = await store().get(k(userId, 'live-cache'), { type: 'json' });
+      if (cache) return { user, cash: cache.cash, holdings: cache.holdings, _live: true };
     }
   }
 
