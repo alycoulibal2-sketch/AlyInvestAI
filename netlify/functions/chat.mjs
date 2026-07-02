@@ -3,9 +3,14 @@ import * as analysisCore from './_lib/analysisCore.mjs';
 import * as claude from './_lib/claude.mjs';
 import * as chatStore from './_lib/chatStore.mjs';
 import { withAuth } from './_lib/auth.mjs';
+import * as membership from './_lib/membership.mjs';
 
 export default withAuth(async (req, context, user) => {
   try {
+    if (!(await membership.isActive(user.id))) {
+      return Response.json({ error: 'Your Founding Member access has ended. Resume Premium to continue — your advisor remembers everything.', code: 'membership_required' }, { status: 402 });
+    }
+
     const { message } = await req.json();
     const snapshot = market.getDailySnapshot();
     const [portfolioView, latestAnalysis, stored] = await Promise.all([

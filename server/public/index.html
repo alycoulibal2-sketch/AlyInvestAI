@@ -546,6 +546,121 @@ input,textarea{font-family:inherit}
 }
 @keyframes liveDotPulse{0%,100%{opacity:1}50%{opacity:.35}}
 
+/* ── MEMBERSHIP / GLASS ── */
+.glass-veil{
+  position:fixed;inset:0;z-index:150;
+  background:rgba(4,5,9,.55);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:28px 18px;overflow-y:auto;
+  opacity:0;pointer-events:none;transition:opacity .35s ease
+}
+.glass-veil.show{opacity:1;pointer-events:all}
+.glass-card{
+  width:100%;max-width:500px;margin:auto;
+  background:linear-gradient(168deg,rgba(30,33,46,.78),rgba(13,15,21,.9));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:26px;padding:38px 34px 32px;
+  box-shadow:0 40px 120px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.05);
+  position:relative;overflow:hidden;
+  transform:translateY(16px) scale(.97);
+  transition:transform .5s cubic-bezier(.16,1,.3,1)
+}
+.glass-veil.show .glass-card{transform:none}
+.glass-card::before{
+  content:'';position:absolute;top:-140px;left:50%;transform:translateX(-50%);
+  width:460px;height:280px;pointer-events:none;
+  background:radial-gradient(ellipse at center, rgba(199,168,103,.16) 0%, rgba(199,168,103,0) 68%)
+}
+.member-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;
+  color:var(--gold);background:var(--gold-dim);
+  border:1px solid rgba(199,168,103,.3);
+  padding:7px 14px;border-radius:999px
+}
+.glass-title{font-size:29px;font-weight:700;letter-spacing:-.6px;color:var(--text);line-height:1.18;margin-top:22px}
+.glass-sub{font-size:15px;color:var(--muted);line-height:1.68;margin-top:14px}
+.glass-sub strong{color:var(--text);font-weight:600}
+.glass-divider{height:1px;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.1),rgba(255,255,255,0));margin:24px 0}
+.feature-list{display:flex;flex-direction:column;gap:11px}
+.feature-list.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+@media (max-width:460px){.feature-list.two-col{grid-template-columns:1fr}}
+.feature-item{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--muted);line-height:1.45}
+.feature-item svg{width:15px;height:15px;stroke:var(--gold);stroke-width:2.4;fill:none;flex-shrink:0;margin-top:2px}
+.price-row{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:6px 0 2px}
+.price-big{font-size:46px;font-weight:700;letter-spacing:-1.5px;color:var(--text);font-variant-numeric:tabular-nums}
+.price-per{font-size:16px;color:var(--muted)}
+.price-note{text-align:center;font-size:12.5px;color:var(--subtle);margin-bottom:4px}
+.glass-footnote{font-size:11.5px;color:var(--subtle);text-align:center;line-height:1.55;margin-top:16px}
+.member-progress{height:4px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:12px}
+.member-progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#9a7830,var(--gold));transition:width .6s ease}
+
+/* paused (lapsed) banner — calm, not alarming */
+.paused-banner{
+  display:none;align-items:center;gap:12px;
+  padding:10px 20px;background:var(--surface2);
+  border-bottom:1px solid var(--border);flex-shrink:0
+}
+.paused-banner.show{display:flex}
+.paused-banner svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;flex-shrink:0}
+.paused-txt{flex:1;font-size:12.5px;color:var(--muted)}
+.paused-cta{font-size:12px;font-weight:700;color:#07080c;background:var(--gold);padding:6px 13px;border-radius:999px;flex-shrink:0}
+
+/* feedback */
+.fb-kinds{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 14px}
+.fb-kind{
+  font-size:12.5px;color:var(--muted);background:var(--surface2);
+  border:1px solid var(--border2);border-radius:999px;padding:7px 14px;
+  cursor:pointer;transition:all .15s
+}
+.fb-kind.sel{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.fb-text{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:14px;padding:13px 15px;font-size:14px;color:var(--text);
+  outline:none;resize:none;min-height:96px;line-height:1.5
+}
+.fb-text:focus{border-color:rgba(199,168,103,.35)}
+.fb-stars{display:flex;gap:8px;justify-content:center;margin:10px 0 4px}
+.fb-star{font-size:30px;color:rgba(255,255,255,.16);cursor:pointer;transition:color .15s,transform .15s}
+.fb-star.on{color:var(--gold)}
+.fb-star:hover{transform:scale(1.12)}
+.fb-vote-row{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:14px;margin-bottom:8px
+}
+.fb-vote-body{flex:1}
+.fb-vote-title{font-size:13.5px;font-weight:600;color:var(--text)}
+.fb-vote-desc{font-size:11.5px;color:var(--muted);margin-top:1px}
+.fb-vote-btn{
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  min-width:46px;padding:7px 10px;border-radius:12px;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s
+}
+.fb-vote-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4}
+.fb-vote-btn.voted{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);cursor:default}
+.fb-prompt{
+  margin:10px 24px 2px;padding:13px 16px;
+  background:linear-gradient(168deg,rgba(30,33,46,.6),rgba(13,15,21,.7));
+  border:1px solid rgba(255,255,255,.08);border-radius:16px;
+  display:flex;align-items:center;gap:12px;
+  animation:fadeUpIn .5s cubic-bezier(.16,1,.3,1)
+}
+.fb-prompt-txt{flex:1;font-size:13px;color:var(--muted)}
+.fb-prompt-txt strong{color:var(--text);font-weight:600}
+@keyframes fadeUpIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fb-success{text-align:center;padding:26px 0 10px}
+.fb-success-ico{
+  width:52px;height:52px;border-radius:50%;margin:0 auto 16px;
+  background:var(--gold-dim);border:1px solid rgba(199,168,103,.35);
+  display:flex;align-items:center;justify-content:center;
+  animation:popIn .45s cubic-bezier(.16,1,.3,1)
+}
+.fb-success-ico svg{width:22px;height:22px;stroke:var(--gold);stroke-width:2.4;fill:none}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+
 /* ── BOOT / AUTH ── */
 #boot-splash{
   position:fixed;inset:0;z-index:200;background:var(--bg);
@@ -704,6 +819,12 @@ input,textarea{font-family:inherit}
       <button class="push-banner-dismiss" onclick="App.dismissPushBanner()">Not now</button>
     </div>
 
+    <div class="paused-banner" id="paused-banner">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg>
+      <span class="paused-txt">Portfolio monitoring is paused. Your data and Advisor Memory are safe.</span>
+      <button class="paused-cta" onclick="App.showPaywall()">Resume Premium</button>
+    </div>
+
     <div class="conversation">
       <div class="messages" id="messages"></div>
       <div class="suggestions" id="suggestions"></div>
@@ -733,6 +854,11 @@ input,textarea{font-family:inherit}
       <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
     </div>
     <div id="settings-body"></div>
+  </div>
+
+  <!-- ════════ MEMBERSHIP / FEEDBACK OVERLAYS ════════ -->
+  <div class="glass-veil" id="glass-veil">
+    <div class="glass-card" id="glass-card"></div>
   </div>
 
 </div>
@@ -906,6 +1032,11 @@ App.apiFetch = async function(url, opts) {
     App.showFlow('welcome');
     showAuthError('welcome-error', 'Your session expired — please sign in again.');
     throw new Error('Session expired');
+  }
+  if (res.status === 402) {
+    // Founding period over and not subscribed — offer Premium, calmly.
+    App.showPaywall();
+    throw new Error('membership_required');
   }
   return res;
 };
@@ -1206,22 +1337,235 @@ App.disconnectBroker = async function() {
 };
 
 App.loadAll = async function() {
-  const [portfolio, notifs, convo, brokerStatus] = await Promise.all([
+  const [portfolio, notifs, convo, brokerStatus, member] = await Promise.all([
     App.apiFetch('/api/portfolio').then(r => r.json()),
     App.apiFetch('/api/notifications').then(r => r.json()),
     App.apiFetch('/api/conversation').then(r => r.json()),
     App.apiFetch('/api/broker-status').then(r => r.json()),
+    App.apiFetch('/api/membership').then(r => r.json()),
   ]);
   App.portfolioView = portfolio;
   App.notifs = notifs;
   App.latestAnalysis = convo.latestAnalysis;
   App.brokerStatus = brokerStatus;
+  App.membership = member;
   App.st.lastSync = new Date().toISOString();
   document.getElementById('health-score').textContent = convo.latestAnalysis ? convo.latestAnalysis.portfolioHealthScore : '—';
   App.renderConvo(convo.feed);
   App.renderNotifs();
   App.renderSettings();
   App.startLiveRefresh();
+  App.applyMembershipState();
+};
+
+// ─── MEMBERSHIP ──────────────────────────────────────────
+const CHECK_SVG = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+const PREMIUM_FEATURES = [
+  'Unlimited Advisor conversations', 'Unlimited portfolio analysis',
+  'Daily portfolio monitoring', 'Smart notifications',
+  'Investment Timeline', 'Advisor Memory',
+  'Portfolio Health Score', '“What Changed?” explanations',
+  'Priority AI processing', 'New features as they launch',
+];
+function featureListHtml(items, twoCol) {
+  return `<div class="feature-list${twoCol ? ' two-col' : ''}">` +
+    items.map(f => `<div class="feature-item">${CHECK_SVG}<span>${f}</span></div>`).join('') + '</div>';
+}
+
+function openGlass(html) {
+  document.getElementById('glass-card').innerHTML = html;
+  document.getElementById('glass-veil').classList.add('show');
+}
+App.closeGlass = function() {
+  document.getElementById('glass-veil').classList.remove('show');
+};
+
+App.applyMembershipState = function() {
+  const m = App.membership;
+  if (!m) return;
+  document.getElementById('paused-banner').classList.toggle('show', m.status === 'lapsed');
+  if (m.status === 'founding' && !m.welcomeSeen) {
+    App.showFoundingWelcome();
+  } else if (m.status === 'lapsed' && !App._paywallShownThisSession) {
+    App._paywallShownThisSession = true;
+    App.showPaywall();
+  } else {
+    App.maybeShowFeedbackPrompt();
+  }
+};
+
+App.showFoundingWelcome = function() {
+  openGlass(`
+    <div style="text-align:center"><span class="member-badge">✦ Founding Member</span></div>
+    <div class="glass-title" style="text-align:center">Welcome, Founding Member.</div>
+    <div class="glass-sub" style="text-align:center">You're joining Corvexsa during its launch.<br>
+      For the next <strong>2 months</strong> you'll enjoy every Premium feature — completely free.</div>
+    <div class="glass-divider"></div>
+    ${featureListHtml(['Full Premium access — every feature unlocked','Unlimited Advisor conversations','Unlimited portfolio analysis & notifications','Priority access to new features'], false)}
+    <div class="glass-divider"></div>
+    <div class="glass-sub" style="font-size:13.5px;text-align:center;margin-top:0">
+      In return, we'd love your feedback. Your suggestions will directly influence the future of Corvexsa.</div>
+    <button class="flow-btn" style="margin-top:24px" onclick="App.ackWelcome()">Start My Free Membership</button>
+    <div class="glass-footnote">A limited-time program, available only during launch.</div>
+  `);
+};
+
+App.ackWelcome = async function() {
+  App.closeGlass();
+  try {
+    const m = await App.apiFetch('/api/membership/ack', { method: 'POST' }).then(r => r.json());
+    App.membership = m;
+  } catch (e) { /* re-shown next load at worst */ }
+};
+
+App.showPaywall = function() {
+  const m = App.membership || {};
+  openGlass(`
+    <div style="text-align:center"><span class="member-badge">Corvexsa Premium</span></div>
+    <div class="glass-title" style="text-align:center">Continue with Corvexsa Premium</div>
+    <div class="glass-sub" style="text-align:center"><strong>Your advisor has learned your investing style.</strong><br>
+      Keep your personalized advisor, investment memory, timeline and daily portfolio monitoring active.</div>
+    <div class="glass-divider"></div>
+    <div class="price-row"><span class="price-big">$14.99</span><span class="price-per">/ month</span></div>
+    <div class="price-note">One plan. Everything included. Cancel anytime.</div>
+    <div class="glass-divider"></div>
+    ${featureListHtml(PREMIUM_FEATURES, true)}
+    <button class="flow-btn" style="margin-top:26px" onclick="App.subscribe(this)">Continue with Premium</button>
+    ${m.status === 'lapsed' ? '<button class="flow-btn-ghost" onclick="App.closeGlass()">Not now</button>' : '<button class="flow-btn-ghost" onclick="App.closeGlass()">Close</button>'}
+    <div class="glass-footnote">Whatever you decide, your Advisor Memory and Investment Timeline are always preserved.</div>
+  `);
+};
+
+App.subscribe = async function(btn) {
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Activating…'; }
+  try {
+    const m = await App.apiFetch('/api/membership/subscribe', { method: 'POST' }).then(r => r.json());
+    App.membership = m;
+    document.getElementById('paused-banner').classList.remove('show');
+    openGlass(`
+      <div class="fb-success">
+        <div class="fb-success-ico">${CHECK_SVG}</div>
+        <div class="glass-title" style="margin-top:0;font-size:24px">Welcome to Premium.</div>
+        <div class="glass-sub">Your advisor is back to watching your portfolio every day.<br>Thank you for being part of Corvexsa.</div>
+      </div>
+      <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass(); App.loadAll();">Continue</button>
+    `);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Continue with Premium'; }
+  }
+};
+
+// ─── FEEDBACK ────────────────────────────────────────────
+const FB_KINDS = [
+  { id: 'feature', label: 'Suggest a feature' },
+  { id: 'bug', label: 'Report a bug' },
+  { id: 'experience', label: 'Share your experience' },
+  { id: 'rating', label: 'Rate AI recommendations' },
+  { id: 'vote', label: 'Vote on what’s next' },
+];
+App._fb = { kind: 'feature', rating: 0 };
+
+App.openFeedback = async function(kind) {
+  App._fb = { kind: kind || 'feature', rating: 0 };
+  App.closeAll();
+  let votesHtml = '';
+  if (App._fb.kind === 'vote') {
+    try {
+      const data = await App.apiFetch('/api/feedback').then(r => r.json());
+      App._fbFeatures = data.features;
+      votesHtml = data.features.map(f => `
+        <div class="fb-vote-row">
+          <div class="fb-vote-body"><div class="fb-vote-title">${f.title}</div><div class="fb-vote-desc">${f.desc}</div></div>
+          <button class="fb-vote-btn ${f.voted ? 'voted' : ''}" id="vote-${f.id}" onclick="App.vote('${f.id}')">
+            <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg><span id="vote-n-${f.id}">${f.votes}</span>
+          </button>
+        </div>`).join('');
+    } catch (e) { votesHtml = '<div class="glass-sub">Could not load the feature list — try again in a moment.</div>'; }
+  }
+  openGlass(`
+    <div style="text-align:center"><span class="member-badge">✦ Founding Member Feedback</span></div>
+    <div class="glass-title" style="font-size:23px;text-align:center">How could Corvexsa become even better?</div>
+    <div class="glass-sub" style="text-align:center;font-size:13.5px;margin-top:8px">You're shaping this product. Every note here is read.</div>
+    <div class="fb-kinds" id="fb-kinds">
+      ${FB_KINDS.map(k => `<div class="fb-kind ${k.id === App._fb.kind ? 'sel' : ''}" onclick="App.setFbKind('${k.id}')">${k.label}</div>`).join('')}
+    </div>
+    <div id="fb-body">${App._fbBody(votesHtml)}</div>
+    <div class="glass-footnote" style="margin-top:14px">Thank you for helping build Corvexsa.</div>
+    <button class="flow-btn-ghost" onclick="App.closeGlass()">Close</button>
+  `);
+};
+
+App._fbBody = function(votesHtml) {
+  const k = App._fb.kind;
+  if (k === 'vote') return votesHtml || '';
+  const stars = k === 'rating'
+    ? `<div class="fb-stars">${[1,2,3,4,5].map(n => `<span class="fb-star ${App._fb.rating >= n ? 'on' : ''}" onclick="App.setFbRating(${n})">★</span>`).join('')}</div>`
+    : '';
+  const ph = { feature: 'What should Corvexsa do next?', bug: 'What happened, and what did you expect instead?', experience: 'How has Corvexsa been for you so far?', rating: 'Anything to add about the advice quality? (optional)' }[k];
+  return `${stars}<textarea class="fb-text" id="fb-text" placeholder="${ph}"></textarea>
+    <button class="flow-btn" style="margin-top:14px" onclick="App.submitFeedback(this)">Send Feedback</button>`;
+};
+
+App.setFbKind = async function(kind) {
+  if (kind === 'vote') { App.openFeedback('vote'); return; }
+  App._fb.kind = kind; App._fb.rating = 0;
+  document.querySelectorAll('.fb-kind').forEach((el, i) => el.classList.toggle('sel', FB_KINDS[i].id === kind));
+  document.getElementById('fb-body').innerHTML = App._fbBody('');
+};
+
+App.setFbRating = function(n) {
+  App._fb.rating = n;
+  document.querySelectorAll('.fb-star').forEach((el, i) => el.classList.toggle('on', i < n));
+};
+
+App.vote = async function(id) {
+  const btn = document.getElementById('vote-' + id);
+  if (!btn || btn.classList.contains('voted')) return;
+  btn.classList.add('voted');
+  const n = document.getElementById('vote-n-' + id);
+  n.textContent = String(Number(n.textContent) + 1);
+  try { await App.apiFetch('/api/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ kind: 'vote', featureId: id }) }); } catch (e) {}
+};
+
+App.submitFeedback = async function(btn) {
+  const text = (document.getElementById('fb-text') || {}).value || '';
+  if (!text.trim() && !App._fb.rating) return;
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Sending…'; }
+  try {
+    await App.apiFetch('/api/feedback', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ kind: App._fb.kind, text, rating: App._fb.rating || undefined }),
+    });
+    openGlass(`
+      <div class="fb-success">
+        <div class="fb-success-ico">${CHECK_SVG}</div>
+        <div class="glass-title" style="margin-top:0;font-size:24px">Thank you.</div>
+        <div class="glass-sub">This genuinely shapes what Corvexsa becomes next.</div>
+      </div>
+      <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass()">Done</button>
+    `);
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Send Feedback'; }
+  }
+};
+
+// A gentle, periodic invitation — at most once a week, always dismissible.
+App.maybeShowFeedbackPrompt = function() {
+  try {
+    const KEY = 'cx_fb_prompt_at';
+    const last = Number(localStorage.getItem(KEY) || 0);
+    if (Date.now() - last < 7 * 24 * 3600 * 1000) return;
+    if (!App.latestAnalysis) return; // let them actually use it first
+    localStorage.setItem(KEY, String(Date.now()));
+    const host = document.querySelector('.conversation');
+    const el = document.createElement('div');
+    el.className = 'fb-prompt';
+    el.innerHTML = `
+      <div class="fb-prompt-txt"><strong>How could Corvexsa become even better?</strong><br>As a Founding Member, your ideas steer the roadmap.</div>
+      <button class="mini-btn" style="flex-shrink:0" onclick="this.closest('.fb-prompt').remove(); App.openFeedback('feature')">Share</button>
+      <button class="push-banner-dismiss" onclick="this.closest('.fb-prompt').remove()">Later</button>`;
+    host.insertBefore(el, document.getElementById('suggestions'));
+  } catch (e) { /* localStorage unavailable — skip quietly */ }
 };
 
 // ─── LIVE PORTFOLIO REFRESH ──────────────────────────────
@@ -1235,6 +1579,7 @@ App.startLiveRefresh = function() {
   if (App._liveTimer) return;
   const tick = async () => {
     if (document.hidden || !App.firebaseUser || !App.st.onboarded) return;
+    if (App.membership && App.membership.status === 'lapsed') return; // monitoring paused
     try {
       const res = await App.apiFetch('/api/portfolio');
       if (!res.ok) return;
@@ -1432,7 +1777,7 @@ App.send = async function() {
     $m(bubbleA(data.reply));
   } catch (err) {
     hideTyping();
-    if (err && err.message === 'Session expired') return; // apiFetch already routed to sign-in
+    if (err && (err.message === 'Session expired' || err.message === 'membership_required')) return; // handled by apiFetch
     $m(bubbleA("I'm having trouble connecting right now. Please try again."));
   } finally {
     btn.classList.remove('disabled');
@@ -1468,7 +1813,8 @@ App.runAnalysis = async function() {
     App.loadAll();
   } catch (err) {
     hideTyping();
-    $m(bubbleA('The analysis failed to run — check that the server has a valid API key configured.'));
+    if (err && err.message === 'membership_required') return; // paywall already shown
+    $m(bubbleA('The analysis failed to run — give it a moment and try again.'));
   }
 };
 
@@ -1594,6 +1940,80 @@ App.openNotifs = function() {
 function fmtShares(n) { return String(+Number(n).toFixed(4)); }
 function isLiveBroker(bs) { return bs && (bs.type === 'trading212' || bs.type === 'ibkr'); }
 
+function membershipCardHtml() {
+  const m = App.membership;
+  if (!m) return '';
+  if (m.status === 'founding') {
+    const pct = Math.max(2, Math.min(100, Math.round((m.daysLeft / 60) * 100)));
+    return `
+    <div class="s-section">
+      <div class="s-section-title">Membership</div>
+      <div class="port-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span class="member-badge" style="font-size:10px;padding:5px 11px">✦ Founding Member</span>
+          <span style="font-size:12px;color:var(--muted)">${m.daysLeft} days remaining</span>
+        </div>
+        <div class="member-progress"><div class="member-progress-fill" style="width:${pct}%"></div></div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:12px">
+          Every Premium feature is free during launch. Thank you for shaping Corvexsa.</div>
+        <div class="mini-btn-row" style="margin-top:12px">
+          <button class="mini-btn" onclick="App.showPaywall()">View Premium plan</button>
+          <button class="mini-btn" onclick="App.openFeedback('feature')">Give feedback</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if (m.status === 'subscribed') {
+    return `
+    <div class="s-section">
+      <div class="s-section-title">Membership</div>
+      <div class="s-row">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div><div class="s-row-lbl">Corvexsa Premium</div><div class="s-row-sub">Active · $14.99/month · everything included</div></div>
+        </div>
+        <span style="font-size:11px;font-weight:600;color:var(--green)">Active</span>
+      </div>
+    </div>`;
+  }
+  return `
+    <div class="s-section">
+      <div class="s-section-title">Membership</div>
+      <div class="port-card">
+        <div style="font-size:14px;font-weight:600;color:var(--text)">Membership paused</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:6px">
+          Monitoring, analysis and conversations are paused. Your timeline and Advisor Memory are preserved — resume anytime.</div>
+        <button class="mini-btn" style="margin-top:12px;width:100%" onclick="App.showPaywall()">Resume Premium — $14.99/month</button>
+      </div>
+    </div>`;
+}
+
+function feedbackSectionHtml() {
+  const founding = App.membership && App.membership.status === 'founding';
+  return `
+    <div class="s-section">
+      <div class="s-section-title">${founding ? 'Founding Member Feedback' : 'Feedback'}</div>
+      ${[
+        { k: 'bug', l: 'Report a bug', d: 'Something broken or off' },
+        { k: 'feature', l: 'Suggest a feature', d: 'What should Corvexsa do next' },
+        { k: 'vote', l: 'Vote on upcoming features', d: 'Help us prioritize the roadmap' },
+        { k: 'experience', l: 'Share your experience', d: 'What works, what could be better' },
+        { k: 'rating', l: 'Rate AI recommendations', d: 'How good is the advice' },
+      ].map(r => `
+      <div class="s-row clickable" onclick="App.openFeedback('${r.k}')">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+            <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <div><div class="s-row-lbl">${r.l}</div><div class="s-row-sub">${r.d}</div></div>
+        </div>
+        <div class="s-row-right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>`).join('')}
+    </div>`;
+}
+
 App.renderSettings = function() {
   const p = App.portfolioView;
   if (!p) return;
@@ -1611,6 +2031,8 @@ App.renderSettings = function() {
         <div><div class="port-stat-lbl">Risk profile</div><div class="port-stat-val">${p.user.riskProfile}</div></div>
       </div>
     </div>
+
+    ${membershipCardHtml()}
 
     <div class="s-section">
       <div class="s-section-title">Holdings</div>
@@ -1660,6 +2082,8 @@ App.renderSettings = function() {
           : `<button class="mini-btn" style="padding:6px 12px" onclick="App.enablePush()">Enable</button>`}
       </div>
     </div>
+
+    ${feedbackSectionHtml()}
 
     <div class="s-section">
       <div class="s-section-title">Connected Broker</div>
