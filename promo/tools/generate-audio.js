@@ -47,10 +47,10 @@ const SCENES = [
     disclaimer: 'AlyInvest provides analysis only. It never executes trades or holds funds. Investing involves risk, including possible loss of principal. Not financial advice.' },
 ];
 
-const LEAD_IN = 0.6;   // scene visible before narration starts
-const TAIL = 0.9;      // breathing room after narration ends
-const OVERLAP = 0.5;   // crossfade between consecutive scenes
-const CTA_HOLD = 2.2;  // extra hold on the closing card
+const LEAD_IN = 0.45;   // scene visible before narration starts
+const TAIL = 0.5;      // breathing room after narration ends
+const OVERLAP = 0.45;   // crossfade between consecutive scenes
+const CTA_HOLD = 1.8;  // extra hold on the closing card
 
 function probeDuration(file) {
   const out = execFileSync(ffprobe, ['-v', 'quiet', '-print_format', 'json', '-show_format', file], { encoding: 'utf8' });
@@ -66,7 +66,7 @@ function probeDuration(file) {
     await tts.setMetadata('en-US-JennyNeural', OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
     const dir = path.join(AUDIO, scene.id);
     fs.mkdirSync(dir, { recursive: true });
-    const { audioFilePath } = await tts.toFile(dir, scene.voiceover, { rate: '-4%' });
+    const { audioFilePath } = await tts.toFile(dir, scene.voiceover, { rate: '+5%' });
     const finalPath = path.join(AUDIO, scene.id + '.mp3');
     fs.copyFileSync(audioFilePath, finalPath);
     fs.rmSync(dir, { recursive: true, force: true });
