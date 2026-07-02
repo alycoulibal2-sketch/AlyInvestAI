@@ -21,32 +21,35 @@ if (VAPID_CONFIGURED) {
 }
 
 function store() { return getStore('alyinvest'); }
+const k = (userId) => `${userId}:subscriptions`;
 
-export async function loadSubs() {
-  return (await store().get('subscriptions', { type: 'json' })) || [];
+export async function loadSubs(userId) {
+  return (await store().get(k(userId), { type: 'json' })) || [];
 }
 
-export async function saveSubs(subs) {
-  await store().set('subscriptions', JSON.stringify(subs));
+export async function saveSubs(userId, subs) {
+  await store().set(k(userId), JSON.stringify(subs));
 }
 
-export async function addSubscription(sub) {
-  const subs = await loadSubs();
+export async function addSubscription(userId, sub) {
+  const subs = await loadSubs(userId);
   if (!subs.find(s => s.endpoint === sub.endpoint)) {
     subs.push(sub);
-    await saveSubs(subs);
+    await saveSubs(userId, subs);
   }
   return subs.length;
 }
 
-export async function removeSubscription(endpoint) {
-  const subs = (await loadSubs()).filter(s => s.endpoint !== endpoint);
-  await saveSubs(subs);
+export async function removeSubscription(userId, endpoint) {
+  const subs = (await loadSubs(userId)).filter(s => s.endpoint !== endpoint);
+  await saveSubs(userId, subs);
 }
 
-export async function sendToAll(payload) {
+// Sends to every device this one user has subscribed on (not a broadcast to
+// all users — each user only ever hears about their own portfolio).
+export async function sendToUser(userId, payload) {
   if (!VAPID_CONFIGURED) return { sent: 0, pruned: 0, skipped: 'vapid-not-configured' };
-  const subs = await loadSubs();
+  const subs = await loadSubs(userId);
   const body = JSON.stringify(payload);
   const results = await Promise.allSettled(subs.map(s => webpush.sendNotification(s, body)));
   const dead = [];
@@ -56,8 +59,8 @@ export async function sendToAll(payload) {
     }
   });
   if (dead.length) {
-    const remaining = (await loadSubs()).filter(s => !dead.includes(s.endpoint));
-    await saveSubs(remaining);
+    const remaining = (await loadSubs(userId)).filter(s => !dead.includes(s.endpoint));
+    await saveSubs(userId, remaining);
   }
   return { sent: subs.length - dead.length, pruned: dead.length };
 }

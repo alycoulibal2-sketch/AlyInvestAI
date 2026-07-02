@@ -9,32 +9,37 @@
 //      nothing connected.
 // Claude never edits any of this — it only reasons over whatever this module
 // returns.
+//
+// Every read/write here is scoped to one userId — this is a multi-tenant
+// app, and nothing in this file may ever be shared across accounts.
 
 import { getStore } from '@netlify/blobs';
 import * as brokerConnection from './brokerConnection.mjs';
 import * as trading212 from './brokers/trading212.mjs';
 import * as ibkr from './brokers/ibkr.mjs';
 
-const DEFAULT_PORTFOLIO = {
-  user: {
-    name: 'Aly Coulibaly',
+function defaultUserProfile(authUser) {
+  const name = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || authUser?.email?.split('@')[0] || 'New Client';
+  return {
+    name,
     riskProfile: 'Moderate',
     horizon: '15+ years',
     monthlyContribution: 1500,
-    goals: ['Long-term wealth building', 'Retirement planning'],
-    preferredSectors: ['Technology', 'Healthcare', 'ETFs / Index Funds'],
+    goals: ['Long-term wealth building'],
+    preferredSectors: ['Technology', 'ETFs / Index Funds'],
     maxSectorConcentrationTarget: 35,
-  },
-  cash: 3110.51,
-  holdings: [
-    { ticker: 'MSFT', name: 'Microsoft',           shares: 59, avgCost: 340.00, price: 465.00 },
-    { ticker: 'NVDA', name: 'NVIDIA',               shares: 76, avgCost: 95.00,  price: 140.00 },
-    { ticker: 'AAPL', name: 'Apple',                shares: 39, avgCost: 190.00, price: 225.00 },
-    { ticker: 'VOO',  name: 'Vanguard S&P 500 ETF', shares: 15, avgCost: 480.00, price: 545.00 },
-    { ticker: 'V',    name: 'Visa',                 shares: 20, avgCost: 260.00, price: 310.00 },
-    { ticker: 'JNJ',  name: 'Johnson & Johnson',    shares: 29, avgCost: 158.00, price: 152.00 },
-  ],
-};
+  };
+}
+
+const DEMO_HOLDINGS = [
+  { ticker: 'MSFT', name: 'Microsoft',           shares: 59, avgCost: 340.00, price: 465.00 },
+  { ticker: 'NVDA', name: 'NVIDIA',               shares: 76, avgCost: 95.00,  price: 140.00 },
+  { ticker: 'AAPL', name: 'Apple',                shares: 39, avgCost: 190.00, price: 225.00 },
+  { ticker: 'VOO',  name: 'Vanguard S&P 500 ETF', shares: 15, avgCost: 480.00, price: 545.00 },
+  { ticker: 'V',    name: 'Visa',                 shares: 20, avgCost: 260.00, price: 310.00 },
+  { ticker: 'JNJ',  name: 'Johnson & Johnson',    shares: 29, avgCost: 158.00, price: 152.00 },
+];
+const DEMO_CASH = 3110.51;
 
 const SECTOR_OF = {
   MSFT: 'Technology', NVDA: 'Technology', AAPL: 'Technology', GOOGL: 'Technology', GOOG: 'Technology',
@@ -46,21 +51,26 @@ const SECTOR_OF = {
 };
 
 function store() { return getStore('alyinvest'); }
+const k = (userId, name) => `${userId}:${name}`;
 
-async function loadUserProfile() {
-  return (await store().get('user-profile', { type: 'json' })) || DEFAULT_PORTFOLIO.user;
+export async function loadUserProfile(userId, authUser) {
+  const existing = await store().get(k(userId, 'user-profile'), { type: 'json' });
+  if (existing) return existing;
+  const fresh = defaultUserProfile(authUser);
+  await store().set(k(userId, 'user-profile'), JSON.stringify(fresh));
+  return fresh;
 }
 
-export async function saveUserProfile(user) {
-  await store().set('user-profile', JSON.stringify(user));
+export async function saveUserProfile(userId, user) {
+  await store().set(k(userId, 'user-profile'), JSON.stringify(user));
 }
 
 // Returns { user, cash, holdings, _live } — _live=true means `price` on every
 // holding is already authoritative and must not be overwritten by the demo
 // market simulator.
-export async function load() {
-  const conn = await brokerConnection.get();
-  const user = await loadUserProfile();
+export async function load(userId, authUser) {
+  const conn = await brokerConnection.get(userId);
+  const user = await loadUserProfile(userId, authUser);
 
   if (conn.type === 'trading212') {
     try {
@@ -82,18 +92,18 @@ export async function load() {
   // at all (including right after a disconnect) we always show the demo
   // baseline — otherwise a stale manual/CSV snapshot could linger forever.
   if (conn.type === 'manual') {
-    const existing = await store().get('portfolio-state', { type: 'json' });
+    const existing = await store().get(k(userId, 'portfolio-state'), { type: 'json' });
     if (existing) return { ...existing, user, _live: false };
   }
 
-  return { ...DEFAULT_PORTFOLIO, user, _live: false };
+  return { user, cash: DEMO_CASH, holdings: DEMO_HOLDINGS, _live: false };
 }
 
 // Used by manual entry / CSV import to replace the stored snapshot.
-export async function saveSnapshot({ holdings, cash }) {
-  const user = await loadUserProfile();
+export async function saveSnapshot(userId, { holdings, cash }, authUser) {
+  const user = await loadUserProfile(userId, authUser);
   const state = { user, cash, holdings };
-  await store().set('portfolio-state', JSON.stringify(state));
+  await store().set(k(userId, 'portfolio-state'), JSON.stringify(state));
   return state;
 }
 
@@ -135,5 +145,3 @@ export function computeView(state) {
     sectorWeights,
   };
 }
-
-export { DEFAULT_PORTFOLIO };

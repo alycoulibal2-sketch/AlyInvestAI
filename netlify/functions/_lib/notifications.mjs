@@ -1,24 +1,25 @@
 import { getStore } from '@netlify/blobs';
 
 function store() { return getStore('alyinvest'); }
+const k = (userId) => `${userId}:notifications`;
 
-export async function list() {
-  return (await store().get('notifications', { type: 'json' })) || [];
+export async function list(userId) {
+  return (await store().get(k(userId), { type: 'json' })) || [];
 }
 
-export async function add({ tag, title, body }) {
-  const items = await list();
+export async function add(userId, { tag, title, body }) {
+  const items = await list(userId);
   const nextId = items.reduce((m, n) => Math.max(m, n.id), 0) + 1;
   const n = { id: nextId, tag, title, body, time: new Date().toISOString(), unread: true };
   items.unshift(n);
-  await store().set('notifications', JSON.stringify(items.slice(0, 200)));
+  await store().set(k(userId), JSON.stringify(items.slice(0, 200)));
   return n;
 }
 
-export async function markRead(id) {
-  const items = await list();
+export async function markRead(userId, id) {
+  const items = await list(userId);
   const n = items.find(x => x.id === Number(id));
   if (n) n.unread = false;
-  await store().set('notifications', JSON.stringify(items));
+  await store().set(k(userId), JSON.stringify(items));
   return n;
 }

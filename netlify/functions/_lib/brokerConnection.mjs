@@ -1,22 +1,23 @@
-// Tracks which broker (if any) is the live source of truth for holdings/cash.
-// Single-user prototype: one connection record, not per-account. Secrets (API
-// keys, bridge shared secrets) live only here, server-side — the frontend never
-// receives them back.
+// Tracks which broker (if any) is the live source of truth for each user's
+// holdings/cash. One connection record per userId. Secrets (API keys, bridge
+// shared secrets) live only here, server-side — the frontend never receives
+// them back.
 
 import { getStore } from '@netlify/blobs';
 
 function store() { return getStore('alyinvest'); }
+const k = (userId) => `${userId}:broker-connection`;
 
-export async function get() {
-  return (await store().get('broker-connection', { type: 'json' })) || { type: null };
+export async function get(userId) {
+  return (await store().get(k(userId), { type: 'json' })) || { type: null };
 }
 
-export async function set(connection) {
-  await store().set('broker-connection', JSON.stringify(connection));
+export async function set(userId, connection) {
+  await store().set(k(userId), JSON.stringify(connection));
 }
 
-export async function clear() {
-  await store().set('broker-connection', JSON.stringify({ type: null }));
+export async function clear(userId) {
+  await store().set(k(userId), JSON.stringify({ type: null }));
 }
 
 // Safe-to-expose view for the Settings panel — never includes apiKey/sharedSecret.

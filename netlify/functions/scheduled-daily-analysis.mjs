@@ -1,10 +1,14 @@
 import * as analysisCore from './_lib/analysisCore.mjs';
+import * as userRegistry from './_lib/userRegistry.mjs';
 
 export default async () => {
-  try {
-    await analysisCore.runDailyAnalysis({ manual: false });
-  } catch (err) {
-    console.error('[scheduled-daily-analysis] failed:', err.message);
+  const userIds = await userRegistry.listAll();
+  for (const userId of userIds) {
+    try {
+      await analysisCore.runDailyAnalysis(userId, { manual: false });
+    } catch (err) {
+      console.error(`[scheduled-daily-analysis] failed for user ${userId}:`, err.message);
+    }
   }
 };
 

@@ -6,29 +6,30 @@ import * as push from './push.mjs';
 import * as notifications from './notifications.mjs';
 
 function store() { return getStore('alyinvest'); }
+const k = (userId) => `${userId}:analysis-log`;
 
-async function loadLog() {
-  return (await store().get('analysis-log', { type: 'json' })) || [];
+async function loadLog(userId) {
+  return (await store().get(k(userId), { type: 'json' })) || [];
 }
-async function saveLog(log) {
-  await store().set('analysis-log', JSON.stringify(log));
+async function saveLog(userId, log) {
+  await store().set(k(userId), JSON.stringify(log));
 }
 
-export async function getLatestAnalysis() {
-  const log = await loadLog();
+export async function getLatestAnalysis(userId) {
+  const log = await loadLog(userId);
   return log[0] || null;
 }
 
-export async function currentPortfolioView(marketSnapshot) {
-  const state = await portfolioLib.load();
+export async function currentPortfolioView(userId, marketSnapshot, authUser) {
+  const state = await portfolioLib.load(userId, authUser);
   const priced = state._live ? state : portfolioLib.applyDemoMarketPrices(state, marketSnapshot);
   return portfolioLib.computeView(priced);
 }
 
-export async function runDailyAnalysis({ manual = false } = {}) {
+export async function runDailyAnalysis(userId, { manual = false, authUser } = {}) {
   const marketSnapshot = market.getDailySnapshot();
-  const portfolioView = await currentPortfolioView(marketSnapshot);
-  const recent = await notifications.list();
+  const portfolioView = await currentPortfolioView(userId, marketSnapshot, authUser);
+  const recent = await notifications.list(userId);
 
   const result = await claude.runDailyAnalysis(portfolioView, marketSnapshot, recent);
 
@@ -40,27 +41,27 @@ export async function runDailyAnalysis({ manual = false } = {}) {
     portfolioTotal: portfolioView.total,
     ...result,
   };
-  const log = await loadLog();
+  const log = await loadLog(userId);
   log.unshift(entry);
-  await saveLog(log.slice(0, 90));
+  await saveLog(userId, log.slice(0, 90));
 
   const actionable = (result.recommendations || []).filter(r => r.action !== 'hold');
   const oppCount = (result.opportunities || []).length;
 
-  await notifications.add({ tag: 'update', title: 'Your advisor reviewed your portfolio', body: result.advisorMessage });
+  await notifications.add(userId, { tag: 'update', title: 'Your advisor reviewed your portfolio', body: result.advisorMessage });
 
   for (const r of actionable) {
-    await notifications.add({
+    await notifications.add(userId, {
       tag: 'update',
       title: `${r.action.toUpperCase()} ${r.ticker}${r.quantity ? ` · ${r.quantity} sh` : ''}`,
       body: r.rationale,
     });
   }
   for (const o of (result.opportunities || [])) {
-    await notifications.add({ tag: 'opportunity', title: `Opportunity: ${o.ticker}${o.name ? ' · ' + o.name : ''}`, body: o.rationale });
+    await notifications.add(userId, { tag: 'opportunity', title: `Opportunity: ${o.ticker}${o.name ? ' · ' + o.name : ''}`, body: o.rationale });
   }
   for (const a of (result.alerts || [])) {
-    await notifications.add({ tag: a.severity === 'critical' ? 'alert' : 'update', title: a.title, body: a.body });
+    await notifications.add(userId, { tag: a.severity === 'critical' ? 'alert' : 'update', title: a.title, body: a.body });
   }
 
   const pushLines = [];
@@ -68,22 +69,22 @@ export async function runDailyAnalysis({ manual = false } = {}) {
   if (oppCount) pushLines.push(`${oppCount} opportunit${oppCount > 1 ? 'ies' : 'y'}`);
   const summary = pushLines.length ? pushLines.join(' · ') : 'Portfolio reviewed — no changes needed';
 
-  await push.sendToAll({ title: 'Your Advisor · Daily Review', body: summary, url: '/#advisor', tag: 'daily-analysis' });
+  await push.sendToUser(userId, { title: 'Your Advisor · Daily Review', body: summary, url: '/#advisor', tag: 'daily-analysis' });
 
   return entry;
 }
 
-export async function runRiskCheck({ manual = false } = {}) {
+export async function runRiskCheck(userId, { manual = false, authUser } = {}) {
   const marketSnapshot = market.getIntradaySnapshot();
-  const portfolioView = await currentPortfolioView(marketSnapshot);
+  const portfolioView = await currentPortfolioView(userId, marketSnapshot, authUser);
   const result = await claude.runRiskCheck(portfolioView, marketSnapshot);
 
   if (result.riskDetected && (result.alerts || []).length) {
     for (const a of result.alerts) {
-      await notifications.add({ tag: 'alert', title: a.title, body: a.body });
+      await notifications.add(userId, { tag: 'alert', title: a.title, body: a.body });
     }
     const first = result.alerts[0];
-    await push.sendToAll({ title: `Risk Alert · ${first.title}`, body: first.body, url: '/#advisor', tag: 'risk-alert' });
+    await push.sendToUser(userId, { title: `Risk Alert · ${first.title}`, body: first.body, url: '/#advisor', tag: 'risk-alert' });
   }
 
   return { ranAt: new Date().toISOString(), manual, ...result };

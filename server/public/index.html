@@ -7,6 +7,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <title>AlyInvest AI</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#07080c;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
@@ -525,9 +526,35 @@ input,textarea{font-family:inherit}
 /* ── ANIMATIONS ── */
 @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .msg-in{animation:msgIn .22s ease-out forwards}
+
+/* ── BOOT / AUTH ── */
+#boot-splash{
+  position:fixed;inset:0;z-index:200;background:var(--bg);
+  display:flex;align-items:center;justify-content:center
+}
+.boot-mark{
+  width:56px;height:56px;border-radius:14px;
+  background:linear-gradient(145deg,#9a7830,var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  animation:bootPulse 1.4s ease-in-out infinite
+}
+.boot-mark svg{width:26px;height:26px;fill:#07080c}
+@keyframes bootPulse{0%,100%{opacity:1}50%{opacity:.55}}
+.auth-btn[disabled]{opacity:.4;pointer-events:none;cursor:default}
+.auth-error{
+  background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.25);
+  border-radius:var(--r-sm);padding:10px 13px;font-size:12.5px;color:var(--red);
+  margin-bottom:14px;line-height:1.45;display:none
+}
+.auth-error.show{display:block}
+.auth-toggle{text-align:center;font-size:13px;color:var(--muted);margin-top:14px}
+.auth-toggle a{color:var(--gold);cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
+<div id="boot-splash">
+  <div class="boot-mark"><svg viewBox="0 0 34 34"><path d="M17 2L30 9.5V24.5L17 32L4 24.5V9.5L17 2Z"/></svg></div>
+</div>
 <div id="app" class="is-flow">
 
   <!-- ════════ FLOW ════════ -->
@@ -544,17 +571,18 @@ input,textarea{font-family:inherit}
         </div>
         <h1 class="wlc-h">Smarter investing starts with a conversation.</h1>
         <p class="wlc-sub">AlyInvest is your personal AI wealth advisor — not a trading platform. It analyzes your portfolio and gives you expert, personalized guidance.</p>
+        <div class="auth-error" id="welcome-error"></div>
         <div class="auth-btns">
-          <button class="auth-btn auth-apple" onclick="App.auth('apple')">
+          <button class="auth-btn auth-apple" id="btn-apple" disabled title="Coming soon — requires Apple Developer enrollment">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-            Continue with Apple
+            Continue with Apple (coming soon)
           </button>
-          <button class="auth-btn auth-google" onclick="App.auth('google')">
+          <button class="auth-btn auth-google" id="btn-google" onclick="App.signInWithGoogle()">
             <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
             Continue with Google
           </button>
           <div class="auth-or">or</div>
-          <button class="auth-btn auth-email" onclick="App.auth('email')">
+          <button class="auth-btn auth-email" onclick="App.showFlow('signup')">
             <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
             Continue with Email
           </button>
@@ -562,16 +590,17 @@ input,textarea{font-family:inherit}
         <p class="legal">By continuing you agree to our <a>Terms of Service</a> and <a>Privacy Policy</a>.<br>AlyInvest never executes trades or holds your money.</p>
       </div>
 
-      <!-- EMAIL SIGNUP -->
+      <!-- EMAIL SIGN UP / SIGN IN -->
       <div class="flow-screen" data-screen="signup">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Create account</div>
-        <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px">Welcome to AlyInvest.</div>
-        <div style="font-size:14px;color:var(--muted);margin-bottom:28px">Your data is encrypted and never shared.</div>
-        <input type="text" class="ob-text" placeholder="Full name" style="margin-bottom:10px" id="su-name">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px" id="signup-eyebrow">Create account</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px" id="signup-heading">Welcome to AlyInvest.</div>
+        <div style="font-size:14px;color:var(--muted);margin-bottom:20px">Your data is encrypted and never shared.</div>
+        <div class="auth-error" id="signup-error"></div>
         <input type="email" class="ob-text" placeholder="Email address" style="margin-bottom:10px" id="su-email">
-        <input type="password" class="ob-text" placeholder="Password" style="margin-bottom:20px" id="su-pwd">
-        <button class="flow-btn" onclick="App.auth('email-done')">Create Account</button>
+        <input type="password" class="ob-text" placeholder="Password (min. 6 characters)" style="margin-bottom:20px" id="su-pwd">
+        <button class="flow-btn" id="signup-submit" onclick="App.submitEmailAuth()">Create Account</button>
         <button class="flow-btn-ghost" onclick="App.showFlow('welcome')">Back</button>
+        <div class="auth-toggle" id="signup-toggle">Already have an account? <a onclick="App.toggleAuthMode()">Sign in</a></div>
       </div>
 
       <!-- ADVISOR INTRO -->
@@ -742,10 +771,12 @@ const OB_QS = [
 const App = window.App = {};
 App.OB = OB_QS;
 
-App.st = { onboarded:false, obAnswers:{}, broker:null, pushEnabled:false };
+App.st = { onboarded:false, obAnswers:{}, broker:null, pushEnabled:false, authMode:'signup' };
 App.chatHistory = []; // [{role,content}] sent to /api/chat for context
 App.portfolioView = null;
 App.notifs = [];
+App.supabase = null;
+App.session = null;
 
 // ─── FLOW ────────────────────────────────────────────────
 App.showFlow = function(id) {
@@ -755,9 +786,115 @@ App.showFlow = function(id) {
   document.getElementById('flow').scrollTop = 0;
 };
 
-App.auth = function(m) {
-  if (m === 'email') { App.showFlow('signup'); }
-  else { App.showFlow('intro'); }
+// ─── AUTH ────────────────────────────────────────────────
+function showAuthError(elId, message) {
+  const el = document.getElementById(elId);
+  el.textContent = message;
+  el.classList.add('show');
+}
+function clearAuthError(elId) {
+  document.getElementById(elId).classList.remove('show');
+}
+
+App.initSupabase = async function() {
+  const { supabaseUrl, supabaseAnonKey } = await fetch('/api/auth-config').then(r => r.json());
+  if (!supabaseUrl || !supabaseAnonKey) {
+    showAuthError('welcome-error', 'Sign-in is not configured yet on the server.');
+    document.getElementById('btn-google').disabled = true;
+    return false;
+  }
+  App.supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+  return true;
+};
+
+App.signInWithGoogle = async function() {
+  clearAuthError('welcome-error');
+  if (!App.supabase) { showAuthError('welcome-error', 'Sign-in is still loading — try again in a moment.'); return; }
+  const { error } = await App.supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  });
+  if (error) showAuthError('welcome-error', error.message);
+};
+
+App.toggleAuthMode = function() {
+  App.st.authMode = App.st.authMode === 'signup' ? 'signin' : 'signup';
+  const isSignup = App.st.authMode === 'signup';
+  document.getElementById('signup-eyebrow').textContent = isSignup ? 'Create account' : 'Welcome back';
+  document.getElementById('signup-heading').textContent = isSignup ? 'Welcome to AlyInvest.' : 'Sign in to AlyInvest.';
+  document.getElementById('signup-submit').textContent = isSignup ? 'Create Account' : 'Sign In';
+  document.getElementById('signup-toggle').innerHTML = isSignup
+    ? 'Already have an account? <a onclick="App.toggleAuthMode()">Sign in</a>'
+    : "New here? <a onclick=\"App.toggleAuthMode()\">Create an account</a>";
+  clearAuthError('signup-error');
+};
+
+App.submitEmailAuth = async function() {
+  clearAuthError('signup-error');
+  const email = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-pwd').value;
+  if (!email || !password) { showAuthError('signup-error', 'Email and password are both required.'); return; }
+  if (!App.supabase) { showAuthError('signup-error', 'Sign-in is still loading — try again in a moment.'); return; }
+
+  const btn = document.getElementById('signup-submit');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Please wait…';
+
+  const isSignup = App.st.authMode === 'signup';
+  const { data, error } = isSignup
+    ? await App.supabase.auth.signUp({ email, password })
+    : await App.supabase.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false; btn.textContent = original;
+
+  if (error) { showAuthError('signup-error', error.message); return; }
+
+  if (isSignup && data.user && !data.session) {
+    showAuthError('signup-error', "Check your email to confirm your account, then come back and sign in.");
+    return;
+  }
+
+  App.session = data.session;
+  await App.afterSignIn();
+};
+
+App.signOut = async function() {
+  if (App.supabase) await App.supabase.auth.signOut();
+  window.location.reload();
+};
+
+// Adds the current session's access token to every backend call. Netlify
+// Functions reject anything without a valid one (see _lib/auth.mjs).
+App.apiFetch = async function(url, opts) {
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {});
+  if (App.session) headers['Authorization'] = 'Bearer ' + App.session.access_token;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+  if (res.status === 401) {
+    // Session expired server-side — force a clean re-auth rather than
+    // leaving the user staring at silently-failing requests.
+    App.session = null;
+    document.getElementById('app').classList.add('is-flow');
+    App.showFlow('welcome');
+    showAuthError('welcome-error', 'Your session expired — please sign in again.');
+    throw new Error('Session expired');
+  }
+  return res;
+};
+
+// Called once we have a confirmed session (fresh sign-in or restored on load).
+// Decides whether to resume straight into the app or continue the onboarding
+// flow, based on whether this account has ever connected a portfolio.
+App.afterSignIn = async function() {
+  const me = await App.apiFetch('/api/me').then(r => r.json());
+  App.currentUser = me;
+  if (me.brokerConnected) {
+    App.st.onboarded = true;
+    document.getElementById('app').classList.remove('is-flow');
+    await App.loadAll();
+  } else {
+    App.showFlow('intro');
+  }
 };
 
 App.startOb = function() {
@@ -935,7 +1072,7 @@ async function submitConnect(url, body, errorElId, submitBtnId) {
   const originalLabel = btn ? btn.textContent : null;
   if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Connecting…'; }
   try {
-    const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const res = await App.apiFetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Connection failed.');
     return data;
@@ -1036,17 +1173,17 @@ App.manageBrokerConnection = function() {
 
 App.disconnectBroker = async function() {
   if (!confirm('Disconnect this broker? AlyInvest will fall back to the demo portfolio.')) return;
-  await fetch('/api/disconnect-broker', { method: 'POST' });
+  await App.apiFetch('/api/disconnect-broker', { method: 'POST' });
   App.loadAll();
 };
 
 App.loadAll = async function(opts) {
   opts = opts || {};
   const [portfolio, notifs, latest, brokerStatus] = await Promise.all([
-    fetch('/api/portfolio').then(r => r.json()),
-    fetch('/api/notifications').then(r => r.json()),
-    opts.skipLatest ? Promise.resolve(null) : fetch('/api/analysis/latest').then(r => r.json()),
-    fetch('/api/broker-status').then(r => r.json()),
+    App.apiFetch('/api/portfolio').then(r => r.json()),
+    App.apiFetch('/api/notifications').then(r => r.json()),
+    opts.skipLatest ? Promise.resolve(null) : App.apiFetch('/api/analysis/latest').then(r => r.json()),
+    App.apiFetch('/api/broker-status').then(r => r.json()),
   ]);
   App.portfolioView = portfolio;
   App.notifs = notifs;
@@ -1155,7 +1292,7 @@ App.send = async function() {
   $m(bubbleU(txt));
   showTyping();
   try {
-    const res = await fetch('/api/chat', {
+    const res = await App.apiFetch('/api/chat', {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ message: txt, history: App.chatHistory.slice(-10) }),
     });
@@ -1187,7 +1324,7 @@ App.runAnalysis = async function() {
   $m(bubbleA('Running a full review of your portfolio against today\'s market now — one moment.'));
   showTyping();
   try {
-    const res = await fetch('/api/analysis/run', { method:'POST' });
+    const res = await App.apiFetch('/api/analysis/run', { method:'POST' });
     const entry = await res.json();
     hideTyping();
     document.getElementById('messages').insertAdjacentHTML('beforeend',
@@ -1210,7 +1347,7 @@ App.runRiskCheck = async function() {
   const btn = event ? event.target : null;
   if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
   try {
-    const res = await fetch('/api/risk-check', { method:'POST' });
+    const res = await App.apiFetch('/api/risk-check', { method:'POST' });
     const entry = await res.json();
     if (entry.riskDetected) {
       document.getElementById('messages').insertAdjacentHTML('beforeend', (entry.alerts||[]).map(cardAlert).join(''));
@@ -1252,7 +1389,7 @@ App.enablePush = async function() {
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
-    await fetch('/api/subscribe', {
+    await App.apiFetch('/api/subscribe', {
       method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(sub),
     });
     App.st.pushEnabled = true;
@@ -1300,11 +1437,11 @@ App.notifTap = async function(id) {
   n.unread = false;
   App.renderNotifs();
   App.closeAll();
-  await fetch('/api/notifications/' + id + '/read', { method:'POST' });
+  await App.apiFetch('/api/notifications/' + id + '/read', { method:'POST' });
   $m(bubbleU(n.title));
   showTyping();
   try {
-    const res = await fetch('/api/chat', {
+    const res = await App.apiFetch('/api/chat', {
       method:'POST', headers:{'content-type':'application/json'},
       body: JSON.stringify({ message: `Tell me more about this: "${n.title}" — ${n.body}`, history: App.chatHistory.slice(-10) }),
     });
@@ -1414,7 +1551,15 @@ App.renderSettings = function() {
           <div class="s-row-ico" style="background:var(--sky-dim);color:var(--sky)">
             <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <div><div class="s-row-lbl">Aly Coulibaly</div><div class="s-row-sub">alycoulibaly@sama.money</div></div>
+          <div><div class="s-row-lbl">${p.user.name}</div><div class="s-row-sub">${(App.currentUser && App.currentUser.email) || ''}</div></div>
+        </div>
+      </div>
+      <div class="s-row clickable" onclick="App.signOut()">
+        <div class="s-row-left">
+          <div class="s-row-ico" style="background:var(--red-dim);color:var(--red)">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </div>
+          <div class="s-row-lbl" style="color:var(--red)">Sign Out</div>
         </div>
       </div>
     </div>
@@ -1442,10 +1587,37 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && document.activeElement.id === 'chat-input') App.send();
 });
 
-App.boot = function() {
+App.boot = async function() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
   }
+
+  const configured = await App.initSupabase();
+  const hideSplash = () => document.getElementById('boot-splash').style.display = 'none';
+
+  if (!configured) { hideSplash(); return; }
+
+  // React to sign-in (including the redirect back from Google OAuth) and
+  // sign-out from anywhere in the app, not just the buttons that triggered them.
+  App.supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && (!App.session || App.session.access_token !== session.access_token)) {
+      App.session = session;
+      if (!App.st.onboarded) App.afterSignIn();
+    } else if (event === 'SIGNED_OUT') {
+      App.session = null;
+    }
+  });
+
+  const { data: { session } } = await App.supabase.auth.getSession();
+  if (session) {
+    App.session = session;
+    try {
+      await App.afterSignIn();
+    } catch (err) {
+      // apiFetch already routes to the welcome screen with an error on 401
+    }
+  }
+  hideSplash();
 };
 App.boot();
 

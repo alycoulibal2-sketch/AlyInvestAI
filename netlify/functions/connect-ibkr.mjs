@@ -1,7 +1,8 @@
 import * as ibkr from './_lib/brokers/ibkr.mjs';
 import * as brokerConnection from './_lib/brokerConnection.mjs';
+import { withAuth } from './_lib/auth.mjs';
 
-export default async (req) => {
+export default withAuth(async (req, context, user) => {
   try {
     const { bridgeUrl, sharedSecret } = await req.json();
     if (!bridgeUrl || !sharedSecret) {
@@ -10,7 +11,7 @@ export default async (req) => {
 
     const live = await ibkr.verifyAndFetch(bridgeUrl, sharedSecret);
 
-    await brokerConnection.set({
+    await brokerConnection.set(user.id, {
       type: 'ibkr',
       bridgeUrl,
       sharedSecret,
@@ -21,6 +22,6 @@ export default async (req) => {
   } catch (err) {
     return Response.json({ error: err.message }, { status: 400 });
   }
-};
+});
 
 export const config = { path: '/api/connect/ibkr' };

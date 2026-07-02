@@ -3,6 +3,7 @@
 
 import * as portfolioLib from './_lib/portfolio.mjs';
 import * as brokerConnection from './_lib/brokerConnection.mjs';
+import { withAuth } from './_lib/auth.mjs';
 
 function validateHoldings(holdings) {
   if (!Array.isArray(holdings) || holdings.length === 0) return 'At least one holding is required.';
@@ -14,7 +15,7 @@ function validateHoldings(holdings) {
   return null;
 }
 
-export default async (req) => {
+export default withAuth(async (req, context, user) => {
   try {
     const { holdings, cash, source } = await req.json();
     const err = validateHoldings(holdings);
@@ -28,9 +29,9 @@ export default async (req) => {
       price: h.price != null ? Number(h.price) : (h.avgCost != null ? Number(h.avgCost) : 0),
     }));
 
-    const state = await portfolioLib.saveSnapshot({ holdings: normalized, cash: Number(cash) || 0 });
+    const state = await portfolioLib.saveSnapshot(user.id, { holdings: normalized, cash: Number(cash) || 0 }, user);
 
-    await brokerConnection.set({
+    await brokerConnection.set(user.id, {
       type: 'manual',
       source: source === 'csv' ? 'csv' : 'manual',
       lastSyncedAt: new Date().toISOString(),
@@ -40,6 +41,6 @@ export default async (req) => {
   } catch (err) {
     return Response.json({ error: err.message }, { status: 400 });
   }
-};
+});
 
 export const config = { path: '/api/connect/portfolio' };
