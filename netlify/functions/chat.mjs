@@ -7,10 +7,14 @@ export default withAuth(async (req, context, user) => {
   try {
     const { message, history } = await req.json();
     const snapshot = market.getDailySnapshot();
-    const portfolioView = await analysisCore.currentPortfolioView(user.id, snapshot, user);
-    const reply = await claude.chat(portfolioView, history, message);
+    const [portfolioView, latestAnalysis] = await Promise.all([
+      analysisCore.currentPortfolioView(user.id, snapshot, user),
+      analysisCore.getLatestAnalysis(user.id),
+    ]);
+    const reply = await claude.chat(portfolioView, snapshot, latestAnalysis, history, message);
     return Response.json({ reply });
   } catch (err) {
+    console.error('[chat]', err.message);
     return Response.json({ error: err.message }, { status: 500 });
   }
 });

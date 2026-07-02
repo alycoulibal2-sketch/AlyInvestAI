@@ -2,9 +2,16 @@ const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5';
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const API_URL = 'https://api.anthropic.com/v1/messages';
 
-async function callClaude({ system, messages, tools, tool_choice, max_tokens = 1600 }) {
+// On Sonnet 5, OMITTING `thinking` silently enables adaptive thinking, and
+// max_tokens caps thinking + visible answer COMBINED. A small max_tokens can
+// therefore be consumed entirely by thinking, yielding a response with zero
+// text blocks (stop_reason: "max_tokens") — which is exactly the production
+// bug this signature now guards against. Always pass generous max_tokens and,
+// where latency matters, an explicit effort level.
+async function callClaude({ system, messages, tools, tool_choice, max_tokens = 4096, effort }) {
   if (!API_KEY) throw new Error('ANTHROPIC_API_KEY is not set');
-  const body = { model: MODEL, max_tokens, system, messages };
+  const body = { model: MODEL, max_tokens, system, messages, thinking: { type: 'adaptive' } };
+  if (effort) body.output_config = { effort };
   if (tools) body.tools = tools;
   if (tool_choice) body.tool_choice = tool_choice;
 
@@ -132,8 +139,18 @@ const RISK_TOOL = {
 
 function extractToolInput(resp, toolName) {
   const block = (resp.content || []).find(b => b.type === 'tool_use' && b.name === toolName);
-  if (!block) throw new Error('Claude did not return the expected tool call');
+  if (!block) {
+    throw new Error(`Claude did not return the expected tool call (stop_reason: ${resp.stop_reason}, blocks: ${(resp.content || []).map(b => b.type).join(',') || 'none'})`);
+  }
   return block.input;
+}
+
+function extractText(resp) {
+  const text = (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+  if (!text) {
+    throw new Error(`Claude returned no text (stop_reason: ${resp.stop_reason}, blocks: ${(resp.content || []).map(b => b.type).join(',') || 'none'})`);
+  }
+  return text;
 }
 
 export async function runDailyAnalysis(portfolioView, marketSnapshot, recentNotifications) {
@@ -161,7 +178,7 @@ ${JSON.stringify((recentNotifications || []).slice(0, 6).map(n => n.title))}`;
     messages: [{ role: 'user', content: userMsg }],
     tools: [ANALYSIS_TOOL],
     tool_choice: toolChoice('record_analysis'),
-    max_tokens: 2200,
+    max_tokens: 8000,
   });
   return extractToolInput(resp, 'record_analysis');
 }
@@ -182,24 +199,41 @@ VIX: ${marketSnapshot.vix}`;
     messages: [{ role: 'user', content: userMsg }],
     tools: [RISK_TOOL],
     tool_choice: toolChoice('record_risk_check'),
-    max_tokens: 800,
+    max_tokens: 4000,
   });
   return extractToolInput(resp, 'record_risk_check');
 }
 
-export async function chat(portfolioView, history, userMessage) {
+export async function chat(portfolioView, marketSnapshot, latestAnalysis, history, userMessage) {
   const context = `Client portfolio context you must ground every answer in:
-TOTAL: $${portfolioView.total} · CASH: $${portfolioView.cash}
-HOLDINGS: ${JSON.stringify(portfolioView.holdings.map(h => ({ ticker: h.ticker, weightPct: h.weightPct, shares: h.shares, price: h.price, gainPct: h.gainPct })))}
+TOTAL: $${portfolioView.total} · CASH AVAILABLE: $${portfolioView.cash}
+HOLDINGS: ${JSON.stringify(portfolioView.holdings.map(h => ({ ticker: h.ticker, weightPct: h.weightPct, shares: h.shares, price: h.price, avgCost: h.avgCost, gainPct: h.gainPct })))}
 SECTOR WEIGHTS: ${JSON.stringify(portfolioView.sectorWeights)}
-RISK PROFILE: ${portfolioView.user.riskProfile} · SECTOR TARGET: ${portfolioView.user.maxSectorConcentrationTarget}%`;
+RISK PROFILE: ${portfolioView.user.riskProfile} · SECTOR CONCENTRATION TARGET: ${portfolioView.user.maxSectorConcentrationTarget}%
+
+TODAY'S MARKET (simulated feed standing in for a live market data provider):
+${JSON.stringify((marketSnapshot?.tickers || []).map(t => ({ ticker: t.ticker, price: t.price, changePct: t.changePct, headline: t.headline || undefined, daysToEarnings: t.daysToEarnings })))}
+VIX-style volatility index: ${marketSnapshot?.vix ?? 'n/a'}
+
+${latestAnalysis ? `YOUR MOST RECENT DAILY REVIEW (from ${latestAnalysis.ranAt}) — stay consistent with it, or explain what changed if you now disagree:
+Health ${latestAnalysis.portfolioHealthScore}/100 · Diversification ${latestAnalysis.diversificationScore}/100 · Risk ${latestAnalysis.overallRisk}
+Summary: ${latestAnalysis.advisorMessage}
+Recommendations: ${JSON.stringify((latestAnalysis.recommendations || []).map(r => ({ ticker: r.ticker, action: r.action, quantity: r.quantity, confidence: r.confidence })))}
+Opportunities: ${JSON.stringify((latestAnalysis.opportunities || []).map(o => ({ ticker: o.ticker, quantity: o.quantity, confidence: o.confidence })))}` : 'You have not yet run a daily review for this client.'}
+
+If asked for specific share quantities, derive them from the holdings, prices, and cash above —
+never invent figures not computable from this data.`;
 
   const messages = [
     ...(history || []).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
     { role: 'user', content: userMessage },
   ];
 
-  const resp = await callClaude({ system: ADVISOR_VOICE + '\n\n' + context, messages, max_tokens: 700 });
-  const block = (resp.content || []).find(b => b.type === 'text');
-  return block ? block.text : "I couldn't form a response — try asking again.";
+  const resp = await callClaude({
+    system: ADVISOR_VOICE + '\n\n' + context,
+    messages,
+    max_tokens: 4096,
+    effort: 'low',
+  });
+  return extractText(resp);
 }

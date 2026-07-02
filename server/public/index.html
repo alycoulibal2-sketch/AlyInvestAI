@@ -1312,12 +1312,19 @@ App.send = async function() {
     });
     const data = await res.json();
     hideTyping();
-    const reply = data.reply || "I couldn't reach the market data right now — try again in a moment.";
-    $m(bubbleA(reply));
+    if (!res.ok || !data.reply) {
+      // Backend error — show a clean message, keep the real cause in the console,
+      // and DON'T record the failed turn in history (a retry should start clean).
+      console.error('chat error:', data.error || res.status);
+      $m(bubbleA('I hit a technical issue answering that — give me a moment and ask again.'));
+      return;
+    }
+    $m(bubbleA(data.reply));
     App.chatHistory.push({role:'user', content:txt});
-    App.chatHistory.push({role:'assistant', content:reply});
+    App.chatHistory.push({role:'assistant', content:data.reply});
   } catch (err) {
     hideTyping();
+    if (err && err.message === 'Session expired') return; // apiFetch already routed to sign-in
     $m(bubbleA("I'm having trouble connecting right now. Please try again."));
   } finally {
     btn.classList.remove('disabled');
@@ -1461,7 +1468,12 @@ App.notifTap = async function(id) {
     });
     const data = await res.json();
     hideTyping();
-    $m(bubbleA(data.reply));
+    if (data.reply) {
+      $m(bubbleA(data.reply));
+    } else {
+      console.error('chat error:', data.error);
+      $m(bubbleA('I hit a technical issue pulling that up — tap it again in a moment.'));
+    }
   } catch (e) { hideTyping(); }
 };
 
