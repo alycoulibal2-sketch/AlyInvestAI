@@ -6,6 +6,7 @@
 import { stripe } from './_lib/stripe.mjs';
 import * as membership from './_lib/membership.mjs';
 import * as notifications from './_lib/notifications.mjs';
+import * as credits from './_lib/credits.mjs';
 
 export default async (req) => {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -25,7 +26,9 @@ export default async (req) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const userId = session.client_reference_id;
+        const userId = session.client_reference_id || session.metadata?.userId;
+
+        // Subscription checkout → activate Premium (unchanged).
         if (userId && session.mode === 'subscription') {
           await membership.subscribe(userId, {
             customerId: session.customer,
@@ -36,6 +39,25 @@ export default async (req) => {
             title: 'Welcome to Corvexsa Premium',
             body: 'Your subscription is active. Your advisor is watching your portfolio every day — thank you for being part of Corvexsa.',
           });
+        }
+
+        // One-time credits purchase → top up the account's balance (idempotent
+        // on session id, so a redelivered event never double-grants).
+        if (userId && session.mode === 'payment' && session.metadata?.kind === 'credits') {
+          const amount = parseInt(session.metadata.credits, 10) || 0;
+          if (amount > 0) {
+            await credits.grantForSession(userId, {
+              sessionId: session.id,
+              credits: amount,
+              pack: session.metadata.pack || null,
+              amount: session.amount_total,
+            });
+            await notifications.add(userId, {
+              tag: 'update',
+              title: `${amount} Corvexsa credits added`,
+              body: 'Your credits are ready to use. Thank you for supporting Corvexsa.',
+            });
+          }
         }
         break;
       }

@@ -339,6 +339,36 @@ input,textarea{font-family:inherit}
 .voice-dots span:nth-child(2){animation-delay:.2s}
 .voice-dots span:nth-child(3){animation-delay:.4s}
 
+/* credits store */
+.credits-card{
+  background:linear-gradient(168deg,rgba(30,33,46,.7),rgba(13,15,21,.82));
+  border:1px solid var(--border2);border-radius:16px;padding:16px 16px 14px;margin-top:6px
+}
+.credits-bal-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.credits-bal-lbl{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.credits-bal-val{font-size:26px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.credits-bal-val span{font-size:13px;font-weight:600;color:var(--muted);margin-left:5px;letter-spacing:0}
+.credits-packs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media (max-width:440px){.credits-packs{grid-template-columns:1fr}}
+.pack{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:14px 8px 12px;text-align:center;
+  background:var(--surface2);border:1px solid var(--border2);border-radius:12px;transition:all .15s
+}
+.pack:hover{border-color:rgba(199,168,103,.5);background:var(--gold-glow)}
+.pack:active{transform:scale(.97)}
+.pack.best{border-color:rgba(199,168,103,.5)}
+.pack-price{font-size:17px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.pack-credits{font-size:12px;font-weight:600;color:var(--gold)}
+.pack-tag{font-size:10px;color:var(--muted);line-height:1.3;min-height:12px}
+.pack-badge{
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:#07080c;background:var(--gold);padding:2px 8px;border-radius:999px;white-space:nowrap
+}
+.pack.busy{opacity:.5;pointer-events:none}
+.credits-note{font-size:11px;color:var(--subtle);margin-top:11px;line-height:1.5;text-align:center}
+
 /* settings voice picker */
 .voice-picker{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 @media (max-width:420px){.voice-picker{grid-template-columns:1fr}}
@@ -1189,6 +1219,7 @@ App.afterSignIn = async function() {
     document.getElementById('app').classList.remove('is-flow');
     await App.loadAll();
     App.handleBillingReturn(); // no-op unless we just came back from Stripe Checkout
+    App.handleCreditsReturn(); // no-op unless we just came back from a credits purchase
   } else {
     App.showFlow('intro');
   }
@@ -1501,18 +1532,20 @@ App.disconnectBroker = async function() {
 };
 
 App.loadAll = async function() {
-  const [portfolio, notifs, convo, brokerStatus, member] = await Promise.all([
+  const [portfolio, notifs, convo, brokerStatus, member, creditsData] = await Promise.all([
     App.apiFetch('/api/portfolio').then(r => r.json()),
     App.apiFetch('/api/notifications').then(r => r.json()),
     App.apiFetch('/api/conversation').then(r => r.json()),
     App.apiFetch('/api/broker-status').then(r => r.json()),
     App.apiFetch('/api/membership').then(r => r.json()),
+    App.apiFetch('/api/credits').then(r => r.json()).catch(() => null),
   ]);
   App.portfolioView = portfolio;
   App.notifs = notifs;
   App.latestAnalysis = convo.latestAnalysis;
   App.brokerStatus = brokerStatus;
   App.membership = member;
+  App.credits = creditsData;
   App.st.lastSync = new Date().toISOString();
   document.getElementById('health-score').textContent = convo.latestAnalysis ? convo.latestAnalysis.portfolioHealthScore : '—';
   App.renderConvo(convo.feed);
@@ -1660,6 +1693,88 @@ App.openBillingPortal = async function(btn) {
   } catch (e) {
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
+};
+
+// ─── CORVEXSA CREDITS ────────────────────────────────────
+App.creditsCardHtml = function() {
+  const c = App.credits;
+  const balance = c ? (c.balance || 0) : 0;
+  const packs = (c && c.packs) || [
+    { id: 'starter', label: 'Starter', amount: 500, credits: 50, tagline: '50 credits' },
+    { id: 'plus', label: 'Plus', amount: 1500, credits: 175, tagline: '175 credits · 17% bonus', best: true },
+    { id: 'pro', label: 'Pro', amount: 5000, credits: 650, tagline: '650 credits · 30% bonus' },
+  ];
+  const usd = (cents) => '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: (cents % 100 ? 2 : 0), maximumFractionDigits: 2 });
+  return `
+    <div class="s-section">
+      <div class="s-section-title">Corvexsa Credits</div>
+      <div class="credits-card">
+        <div class="credits-bal-row">
+          <span class="credits-bal-lbl">Your balance</span>
+          <span class="credits-bal-val" id="credits-balance">${balance.toLocaleString('en-US')}<span>credits</span></span>
+        </div>
+        <div class="credits-packs">
+          ${packs.map(p => `
+            <button class="pack ${p.best ? 'best' : ''}" onclick="App.buyCredits('${p.id}', this)">
+              ${p.best ? '<span class="pack-badge">Best value</span>' : ''}
+              <span class="pack-price">${usd(p.amount)}</span>
+              <span class="pack-credits">${p.credits.toLocaleString('en-US')} credits</span>
+              <span class="pack-tag">${(p.tagline || '').replace(/^\d[\d,]*\s+credits\s*·?\s*/, '') || '&nbsp;'}</span>
+            </button>`).join('')}
+        </div>
+        <div class="credits-note">Credits are a one-time purchase and never expire. Secure checkout by Stripe.</div>
+      </div>
+    </div>`;
+};
+
+App.buyCredits = async function(packId, btn) {
+  if (btn) btn.classList.add('busy');
+  try {
+    const res = await App.apiFetch('/api/credits/checkout', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pack: packId }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || 'Checkout unavailable');
+    window.location.href = data.url; // Stripe-hosted checkout
+  } catch (e) {
+    if (btn) btn.classList.remove('busy');
+  }
+};
+
+// Back from a credits checkout: ?credits=success — poll the balance briefly
+// (webhook usually lands in a couple seconds), then celebrate.
+App.handleCreditsReturn = async function() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('credits')) return;
+  const outcome = q.get('credits');
+  history.replaceState(null, '', location.pathname);
+  if (outcome !== 'success') return;
+  const before = App.credits ? (App.credits.balance || 0) : 0;
+  for (let i = 0; i < 10; i++) {
+    try {
+      const c = await App.apiFetch('/api/credits').then(r => r.json());
+      if (c && (c.balance || 0) > before) {
+        App.credits = c;
+        App.renderSettings();
+        const gained = (c.balance || 0) - before;
+        openGlass(`
+          <div class="fb-success">
+            <div class="fb-success-ico">${CHECK_SVG}</div>
+            <div class="glass-title" style="margin-top:0;font-size:24px">${gained.toLocaleString('en-US')} credits added</div>
+            <div class="glass-sub">Your balance is now ${(c.balance || 0).toLocaleString('en-US')} credits. Thank you for supporting Corvexsa.</div>
+          </div>
+          <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass()">Done</button>
+        `);
+        return;
+      }
+    } catch (e) { /* keep polling */ }
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  openGlass(`
+    <div class="glass-title" style="font-size:22px;text-align:center">Payment received</div>
+    <div class="glass-sub" style="text-align:center">Your credits are being added — it can take a moment. Your balance will update on its own.</div>
+    <button class="flow-btn" style="margin-top:20px" onclick="App.closeGlass()">Continue</button>
+  `);
 };
 
 // ─── VOICE MODE ──────────────────────────────────────────
@@ -2607,6 +2722,8 @@ App.renderSettings = function() {
     </div>
 
     ${App.membership && App.membership.status === 'lapsed' ? '' : App.voicePickerHtml()}
+
+    ${App.creditsCardHtml()}
 
     ${feedbackSectionHtml()}
 
