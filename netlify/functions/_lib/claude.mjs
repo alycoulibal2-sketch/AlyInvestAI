@@ -111,7 +111,8 @@ const ANALYSIS_TOOL = {
       },
       opportunities: {
         type: 'array',
-        description: 'New tickers (not currently held) worth suggesting a buy on, if any look attractive today. Can be empty. These also power the Opportunity Feed, so give each a real risk note.',
+        maxItems: 3,
+        description: 'The BEST opportunities from across the market scan below — pick AT MOST 3, ranked best first, chosen from the MARKET SCAN CANDIDATES (not currently held). Only include ones genuinely attractive for THIS client given their goals, risk profile and what they already own; fewer than 3 (even zero) is fine on a quiet day. These power the Opportunity Feed, so give each a real risk note.',
         items: {
           type: 'object',
           properties: {
@@ -233,7 +234,7 @@ CASH AVAILABLE TO INVEST: $${portfolioView.cash}
 TOTAL PORTFOLIO VALUE: $${portfolioView.total}
 SECTOR WEIGHTS: ${JSON.stringify(portfolioView.sectorWeights)}
 
-TODAY'S MARKET SNAPSHOT (simulated feed standing in for a live market data provider):
+MARKET SCAN CANDIDATES (a shortlist screened from across the whole market today — the client's holdings, their followed favorites, the day's biggest movers, and ideas from sectors they're light in. Choose your opportunities from these; they represent the market, not just a fixed watchlist):
 ${JSON.stringify(marketSnapshot.tickers, null, 2)}
 VIX-style volatility index: ${marketSnapshot.vix}
 

@@ -992,11 +992,21 @@ input,textarea{font-family:inherit}
 .opp-ask{font-size:12.5px;font-weight:600;color:var(--gold);margin-top:12px;cursor:pointer}
 
 /* favorites */
-.fav-add-row{display:flex;gap:8px;margin-bottom:16px}
-.fav-add-select{
-  flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;
-  padding:10px 12px;font-size:13px;color:var(--text);outline:none;color-scheme:dark
+.fav-search-wrap{margin-bottom:16px}
+.fav-results{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.fav-result{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 14px;border-radius:12px;cursor:pointer;transition:background .12s
 }
+.fav-result:hover{background:var(--surface2)}
+.fav-result-body{min-width:0;flex:1}
+.fav-result-tk{font-size:14px;font-weight:700;color:var(--text)}
+.fav-result-nm{font-size:12px;color:var(--muted);margin-left:8px}
+.fav-result-right{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.fav-result-px{font-size:12.5px;color:var(--text);font-variant-numeric:tabular-nums}
+.fav-result-add{font-size:11.5px;font-weight:600;color:var(--gold)}
+.fav-result-following{font-size:11.5px;color:var(--subtle)}
+.fav-result-empty{padding:14px;font-size:12.5px;color:var(--muted);text-align:center}
 .fav-card{
   background:linear-gradient(168deg,rgba(30,33,46,.5),rgba(13,15,21,.6));
   border:1px solid var(--border2);border-radius:16px;padding:16px 18px;margin-bottom:12px
@@ -3331,15 +3341,6 @@ function scoreColor(n) {
   return 'var(--red)';
 }
 
-// Companies in the advisor's coverage universe that can be followed as
-// favorites (mirrors the market simulator's UNIVERSE; the server validates).
-App.FAV_UNIVERSE = [
-  { ticker: 'MSFT', name: 'Microsoft' }, { ticker: 'NVDA', name: 'NVIDIA' }, { ticker: 'AAPL', name: 'Apple' },
-  { ticker: 'VOO', name: 'Vanguard S&P 500 ETF' }, { ticker: 'V', name: 'Visa' }, { ticker: 'JNJ', name: 'Johnson & Johnson' },
-  { ticker: 'GOOGL', name: 'Alphabet' }, { ticker: 'AMZN', name: 'Amazon' }, { ticker: 'SCHD', name: 'Schwab US Dividend ETF' },
-  { ticker: 'XOM', name: 'Exxon Mobil' }, { ticker: 'UNH', name: 'UnitedHealth Group' },
-];
-
 App.openHub = function(view) {
   document.getElementById('hub-panel').classList.add('open');
   document.getElementById('backdrop').classList.add('show');
@@ -3574,18 +3575,13 @@ App.renderFavorites = async function() {
   let favs = [];
   try { favs = (await App.apiFetch('/api/favorites').then(r => r.json())).favorites || []; } catch (e) {}
   App._favTickers = favs.map(f => f.ticker);
-  const universe = App.FAV_UNIVERSE || [];
-  const addable = universe.filter(u => !App._favTickers.includes(u.ticker));
   const body = document.getElementById('hub-body');
   body.innerHTML = `${hubBack()}
     <div class="hub-anim">
-      ${addable.length ? `<div class="fav-add-row">
-        <select class="fav-add-select" id="fav-add-select">
-          <option value="">Follow a company…</option>
-          ${addable.map(u => `<option value="${u.ticker}">${u.ticker} · ${esc(u.name)}</option>`).join('')}
-        </select>
-        <button class="mini-btn" onclick="App.addFavorite()">Follow</button>
-      </div>` : ''}
+      <div class="fav-search-wrap">
+        <input class="journal-search" id="fav-search" placeholder="Search a company to follow — e.g. AMZN or Amazon" style="margin-bottom:0" autocomplete="off">
+        <div class="fav-results" id="fav-results"></div>
+      </div>
       ${favs.length ? favs.map(f => `
         <div class="fav-card">
           <div class="fav-hd">
@@ -3605,12 +3601,39 @@ App.renderFavorites = async function() {
             <span class="fav-link" onclick="App.askAboutTicker('${f.ticker}')">Ask your advisor →</span>
             <span class="fav-remove" onclick="App.removeFavorite('${f.ticker}')">Unfollow</span>
           </div>
-        </div>`).join('') : '<div class="journal-empty">You\'re not following any companies yet.<br>Follow one above and your advisor will monitor it alongside your holdings.</div>'}
+        </div>`).join('') : '<div class="journal-empty">You\'re not following any companies yet.<br>Search above to follow one, and your advisor will monitor it alongside your holdings.</div>'}
     </div>`;
+
+  const search = document.getElementById('fav-search');
+  if (search) {
+    search.oninput = () => { clearTimeout(App._favDebounce); App._favDebounce = setTimeout(() => App.searchCompanies(search.value.trim()), 250); };
+  }
 };
-App.addFavorite = async function() {
-  const sel = document.getElementById('fav-add-select');
-  const ticker = sel && sel.value;
+
+App.searchCompanies = async function(q) {
+  const host = document.getElementById('fav-results');
+  if (!host) return;
+  if (!q) { host.innerHTML = ''; return; }
+  let results = [];
+  try { results = (await App.apiFetch('/api/companies/search?q=' + encodeURIComponent(q)).then(r => r.json())).results || []; } catch (e) {}
+  const following = new Set(App._favTickers || []);
+  if (!results.length) { host.innerHTML = '<div class="fav-result-empty">No companies match that.</div>'; return; }
+  host.innerHTML = results.map(r => {
+    const already = following.has(r.ticker);
+    return `<div class="fav-result" ${already ? '' : `onclick="App.addFavorite('${r.ticker}')"`}>
+      <div class="fav-result-body">
+        <span class="fav-result-tk">${esc(r.ticker)}</span>
+        <span class="fav-result-nm">${esc(r.name)}</span>
+      </div>
+      <div class="fav-result-right">
+        ${r.price != null ? `<span class="fav-result-px">$${r.price}</span>` : ''}
+        ${r.changePct != null ? `<span class="fav-chg" style="color:${r.changePct >= 0 ? 'var(--green)' : 'var(--red)'}">${r.changePct >= 0 ? '+' : ''}${r.changePct}%</span>` : ''}
+        ${already ? '<span class="fav-result-following">Following</span>' : '<span class="fav-result-add">+ Follow</span>'}
+      </div>
+    </div>`;
+  }).join('');
+};
+App.addFavorite = async function(ticker) {
   if (!ticker) return;
   try { await App.apiFetch('/api/favorites', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ticker }) }); } catch (e) {}
   await App.renderFavorites();

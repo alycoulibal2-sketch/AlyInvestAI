@@ -50,7 +50,19 @@ export async function runDailyAnalysis(userId, { manual = false, authUser } = {}
   const recent = await notifications.list(userId);
   const favs = await favorites.list(userId);
 
-  const result = await claude.runDailyAnalysis(portfolioView, marketSnapshot, recent, favs);
+  // Scan the whole market, then hand the advisor a relevant shortlist to
+  // reason over (holdings + favorites + biggest movers + underweight-sector
+  // ideas) so it can pick the best opportunities from across the market
+  // without us shipping all ~200 tickers into the prompt.
+  const candidates = market.screenCandidates(marketSnapshot, {
+    holdingTickers: portfolioView.holdings.map(h => h.ticker),
+    favoriteTickers: favs,
+    sectorWeights: portfolioView.sectorWeights,
+    n: 18,
+  }).map(({ volumeM, ...t }) => t); // trim volume — irrelevant to the scan, keeps the prompt lean
+  const scanSnapshot = { ...marketSnapshot, tickers: candidates };
+
+  const result = await claude.runDailyAnalysis(portfolioView, scanSnapshot, recent, favs);
 
   const entry = {
     id: Date.now(),
@@ -96,7 +108,12 @@ export async function runDailyAnalysis(userId, { manual = false, authUser } = {}
 export async function runRiskCheck(userId, { manual = false, authUser } = {}) {
   const marketSnapshot = market.getIntradaySnapshot();
   const portfolioView = await currentPortfolioView(userId, marketSnapshot, authUser);
-  const result = await claude.runRiskCheck(portfolioView, marketSnapshot);
+  // Risk is about what the client holds; only their holdings' intraday ticks
+  // are relevant, so trim the market to those before reasoning (avoids
+  // shipping the whole catalog into the prompt).
+  const heldSet = new Set(portfolioView.holdings.map(h => h.ticker));
+  const riskSnapshot = { ...marketSnapshot, tickers: marketSnapshot.tickers.filter(t => heldSet.has(t.ticker)) };
+  const result = await claude.runRiskCheck(portfolioView, riskSnapshot);
 
   if (result.riskDetected && (result.alerts || []).length) {
     for (const a of result.alerts) {

@@ -24,19 +24,16 @@ export default withAuth(async (req, context, user) => {
 
   // Enrich the (possibly just-updated) list with market data + any recent
   // recommendation the advisor made about each favorite.
-  const [list, snapshot, latest] = await Promise.all([
+  const [list, latest] = await Promise.all([
     favorites.list(user.id),
-    Promise.resolve(market.getDailySnapshot()),
     analysisCore.getLatestAnalysis(user.id),
   ]);
-  const byTicker = {};
-  snapshot.tickers.forEach(t => { byTicker[t.ticker] = t; });
   const recRec = {};
   (latest?.recommendations || []).forEach(r => { recRec[r.ticker] = r; });
   (latest?.opportunities || []).forEach(o => { if (!recRec[o.ticker]) recRec[o.ticker] = { ticker: o.ticker, action: 'buy', rationale: o.rationale, confidence: o.confidence }; });
 
   const items = list.map(tk => {
-    const m = byTicker[tk] || {};
+    const m = market.priceTicker(tk) || {}; // price only the followed tickers, not the whole catalog
     const rec = recRec[tk] || null;
     return {
       ticker: tk,
