@@ -394,11 +394,16 @@
       applyReveal(node.sub, lt, 0.24, 0.72, 30);
       applyReveal(node.media, lt, 0.16, 0.66, 44);
 
-      // Ken Burns on the inner image, across full scene duration
+      // Gentle Ken Burns on the inner image, across full scene duration.
+      // These are content-dense UI screenshots, not photos: a big zoom + cover
+      // crops text off the edges. Start flush at 1.0 (cover exactly fills the
+      // frame — no crop) and drift only ~4%, with a whisper of vertical pan
+      // that stays inside the tiny headroom the zoom creates. Nothing readable
+      // ever leaves the frame.
       if (node.img) {
         var kp = dur > 0 ? clamp(lt / dur, 0, 1) : 0;
-        var scale = 1.07 + 0.13 * kp;
-        var ty = -2 * kp; // percent
+        var scale = 1.0 + 0.04 * kp;
+        var ty = -0.8 * kp; // percent — well within the ~2% headroom at end scale
         node.img.style.transform = "scale(" + scale.toFixed(4) + ") translateY(" + ty.toFixed(3) + "%)";
       }
     }
