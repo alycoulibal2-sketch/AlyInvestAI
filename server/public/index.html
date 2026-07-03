@@ -1916,7 +1916,7 @@ App.VOICES = [
   { id: 'guy',    name: 'Guy',    tone: 'Warm' },
   { id: 'eric',   name: 'Eric',   tone: 'Steady' },
 ];
-App._voice = { open: false, state: 'idle', rec: null, audio: null, ac: null, analyser: null, raf: 0, finalText: '', reqId: 0 };
+App._voice = { open: false, state: 'idle', rec: null, audio: null, ac: null, analyser: null, raf: 0, finalText: '', reqId: 0, startTimer: 0, silenceTimer: 0 };
 
 App.voicePref = function() {
   return (App.currentUser && App.currentUser.voice) || localStorage.getItem('cx_voice') || 'aria';
@@ -1992,8 +1992,10 @@ App._voiceSetState = function(state) {
 
 App._voiceStopRec = function() {
   const v = App._voice;
+  clearTimeout(v.startTimer);
+  clearTimeout(v.silenceTimer);
   if (!v.rec) return;
-  try { v.rec.onend = null; v.rec.onresult = null; v.rec.onerror = null; v.rec.abort(); } catch (e) {}
+  try { v.rec.onstart = null; v.rec.onend = null; v.rec.onresult = null; v.rec.onerror = null; v.rec.abort(); } catch (e) {}
   v.rec = null;
 };
 
@@ -2014,14 +2016,42 @@ App._voiceListen = function() {
   const rec = new SR();
   rec.lang = 'en-US';
   rec.interimResults = true;
-  rec.continuous = false;
+  // continuous:true — the browser's own built-in pause cutoff (continuous:
+  // false) ends the turn after only ~1-2s of silence, and isn't configurable
+  // via the Web Speech API. Taking control with our own SILENCE_MS timer
+  // below is the only way to actually make the pause 4 seconds.
+  rec.continuous = true;
   rec.maxAlternatives = 1;
   v.rec = rec;
   v.finalText = '';
   App._voiceSetState('listening');
   document.getElementById('voice-caption').innerHTML = '';
 
+  // How long to wait after the user stops talking before treating the turn
+  // as complete and sending it. Restarted on every result (interim or
+  // final) so mid-sentence pauses don't cut the user off early.
+  const SILENCE_MS = 4000;
+  function armSilenceTimer() {
+    clearTimeout(v.silenceTimer);
+    v.silenceTimer = setTimeout(() => { try { rec.stop(); } catch (e) {} }, SILENCE_MS);
+  }
+
+  // Some Chromium-based browsers (Opera, Vivaldi, Brave) expose the
+  // SpeechRecognition constructor — it just SITS there after .start(): no
+  // permission prompt, no onstart/onerror/onend, nothing — because the
+  // actual recognition backend is a Chrome-proprietary service they never
+  // wired up. Without a watchdog this hangs at "Listening" forever with no
+  // feedback. onstart (recognition engine genuinely engaged) clears it;
+  // if nothing has happened within 10s, treat the engine as non-functional.
+  clearTimeout(v.startTimer);
+  v.startTimer = setTimeout(() => {
+    if (v.rec === rec && v.state === 'listening') App._voiceEngineUnresponsive();
+  }, 10000);
+
+  rec.onstart = () => { clearTimeout(v.startTimer); };
   rec.onresult = (e) => {
+    clearTimeout(v.startTimer);
+    armSilenceTimer(); // heard something — restart the 4s pause countdown
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
@@ -2031,10 +2061,15 @@ App._voiceListen = function() {
     cap.innerHTML = escapeHtml(v.finalText) + (interim ? ` <span class="interim">${escapeHtml(interim)}</span>` : '');
   };
   rec.onerror = (e) => {
+    clearTimeout(v.startTimer);
+    clearTimeout(v.silenceTimer);
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { App._voiceMicDenied(); }
-    // no-speech / aborted / network fall through to onend, which re-listens
+    else if (e.error === 'audio-capture' || e.error === 'network' || e.error === 'language-not-supported') { App._voiceEngineUnresponsive(); }
+    // no-speech / aborted fall through to onend, which re-listens
   };
   rec.onend = () => {
+    clearTimeout(v.startTimer);
+    clearTimeout(v.silenceTimer);
     if (!v.open || v.state !== 'listening') return;
     const text = (v.finalText || '').trim();
     if (text) App._voiceSend(text);
@@ -2126,6 +2161,18 @@ App._voiceMicDenied = function() {
   openGlass(`
     <div class="glass-title" style="text-align:center;font-size:22px">Microphone access needed</div>
     <div class="glass-sub" style="text-align:center">To talk with your advisor, allow microphone access for this site in your browser settings, then try again.</div>
+    <button class="flow-btn" style="margin-top:20px" onclick="App.closeGlass()">Got it</button>
+  `);
+};
+
+// Fires when the browser's speech engine never responds at all — no
+// permission prompt, no error, nothing (the Opera/Vivaldi/Brave case: the
+// SpeechRecognition constructor exists but isn't wired to a working backend).
+App._voiceEngineUnresponsive = function() {
+  App.closeVoice();
+  openGlass(`
+    <div class="glass-title" style="text-align:center;font-size:22px">Voice isn't responding in this browser</div>
+    <div class="glass-sub" style="text-align:center">If a microphone permission prompt appeared, allow it and try again. Otherwise, this browser may not fully support voice conversations yet — voice works best in Chrome, Edge, or Safari. You can keep chatting by text here anytime.</div>
     <button class="flow-btn" style="margin-top:20px" onclick="App.closeGlass()">Got it</button>
   `);
 };
