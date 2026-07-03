@@ -138,8 +138,41 @@ const ANALYSIS_TOOL = {
           required: ['severity', 'title', 'body'],
         },
       },
+      healthBreakdown: {
+        type: 'object',
+        description: 'The Portfolio Health Score broken into five categories, each 0-100 with a one-to-two sentence plain-language explanation of exactly how you arrived at it from this portfolio. portfolioHealthScore should be roughly the average of these five.',
+        properties: {
+          diversification: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 100 }, explanation: { type: 'string' } }, required: ['score', 'explanation'] },
+          risk: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 100 }, explanation: { type: 'string' } }, required: ['score', 'explanation'] },
+          growthPotential: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 100 }, explanation: { type: 'string' } }, required: ['score', 'explanation'] },
+          stability: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 100 }, explanation: { type: 'string' } }, required: ['score', 'explanation'] },
+          valuation: { type: 'object', properties: { score: { type: 'integer', minimum: 0, maximum: 100 }, explanation: { type: 'string' } }, required: ['score', 'explanation'] },
+        },
+        required: ['diversification', 'risk', 'growthPotential', 'stability', 'valuation'],
+      },
+      journalEntry: {
+        type: 'string',
+        description: "Today's advisor journal entry — a short, calm, first-person diary note (3-6 sentences) as if you personally sat down at the end of the day and wrote what you reviewed, what changed, what earnings or news mattered, and whether the client's portfolio stayed aligned with their goals. Warm and human, never a bullet list. Written at the client's communication level.",
+      },
+      goalAssessments: {
+        type: 'array',
+        description: "One entry for EACH of the client's stated goals (from CLIENT PROFILE goals). If they have no explicit goals, assess their implied goal of long-term wealth building.",
+        items: {
+          type: 'object',
+          properties: {
+            goal: { type: 'string', description: 'The goal, echoed from the profile.' },
+            progressPct: { type: 'integer', minimum: 0, maximum: 100, description: 'How far along toward this goal, best estimate given portfolio size, contributions, and horizon.' },
+            probabilityPct: { type: 'integer', minimum: 0, maximum: 100, description: 'Probability of achieving this goal on the current trajectory.' },
+            timeline: { type: 'string', description: 'Estimated timeline, e.g. "~12 years" or "on track for 2040".' },
+            positiveFactors: { type: 'array', items: { type: 'string' }, description: 'What is helping (1-3 items).' },
+            negativeFactors: { type: 'array', items: { type: 'string' }, description: 'What is working against it (0-3 items).' },
+            toImprove: { type: 'string', description: 'The single most impactful thing to improve the odds.' },
+          },
+          required: ['goal', 'progressPct', 'probabilityPct', 'timeline', 'positiveFactors', 'negativeFactors', 'toImprove'],
+        },
+      },
     },
-    required: ['portfolioHealthScore', 'diversificationScore', 'overallRisk', 'advisorMessage', 'recommendations', 'opportunities', 'alerts'],
+    required: ['portfolioHealthScore', 'diversificationScore', 'overallRisk', 'advisorMessage', 'recommendations', 'opportunities', 'alerts', 'healthBreakdown', 'journalEntry', 'goalAssessments'],
   },
 };
 
@@ -201,15 +234,22 @@ ${JSON.stringify(marketSnapshot.tickers, null, 2)}
 VIX-style volatility index: ${marketSnapshot.vix}
 
 RECENT NOTIFICATIONS ALREADY SENT (avoid repeating the same point verbatim):
-${JSON.stringify((recentNotifications || []).slice(0, 6).map(n => n.title))}`;
+${JSON.stringify((recentNotifications || []).slice(0, 6).map(n => n.title))}
+
+THE CLIENT'S STATED GOALS (assess each one in goalAssessments): ${JSON.stringify(portfolioView.user?.goals || ['Long-term wealth building'])}`;
 
   const resp = await callClaude({
     system: BASE_VOICE + '\n\n' + styleFor(portfolioView.user?.experience) +
-      '\nWrite advisorMessage, every rationale, and every alert body at this communication level.',
+      '\nWrite advisorMessage, journalEntry, every rationale, every alert body, every health-breakdown explanation, ' +
+      'and every goal assessment at this communication level. The healthBreakdown explanations must describe how you ' +
+      "actually derived each score from THIS client's holdings, sector weights, and cash — never generic definitions.",
     messages: [{ role: 'user', content: userMsg }],
     tools: [ANALYSIS_TOOL],
     tool_choice: toolChoice('record_analysis'),
-    max_tokens: 8000,
+    // Richer structured output now (health breakdown + journal + per-goal
+    // assessments). Sonnet 5 caps thinking+output combined, so keep this
+    // generous or the tool call can be truncated mid-JSON.
+    max_tokens: 16000,
   });
   return extractToolInput(resp, 'record_analysis');
 }

@@ -861,6 +861,115 @@ input,textarea{font-family:inherit}
 #dev-panel-body::-webkit-scrollbar{width:3px}
 #dev-panel-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
+/* ── ADVISOR HUB (Journal · Goals · Health) ── */
+.panel-wide{width:440px;max-width:100vw}
+#hub-body{flex:1;overflow-y:auto;padding:18px}
+#hub-body::-webkit-scrollbar{width:3px}
+#hub-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.hub-back{
+  display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);
+  cursor:pointer;margin-bottom:16px;transition:color .15s
+}
+.hub-back:hover{color:var(--text)}
+.hub-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.hub-anim{animation:hubIn .34s cubic-bezier(.16,1,.3,1)}
+@keyframes hubIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* hub home cards */
+.hub-cards{display:flex;flex-direction:column;gap:12px}
+.hub-card{
+  display:flex;align-items:center;gap:15px;padding:18px;
+  background:linear-gradient(168deg,rgba(30,33,46,.5),rgba(13,15,21,.6));
+  border:1px solid var(--border2);border-radius:16px;cursor:pointer;
+  transition:transform .2s cubic-bezier(.16,1,.3,1),border-color .2s,background .2s
+}
+.hub-card:hover{transform:translateY(-2px);border-color:rgba(199,168,103,.4);background:linear-gradient(168deg,rgba(199,168,103,.08),rgba(13,15,21,.6))}
+.hub-card:active{transform:scale(.99)}
+.hub-card-ico{
+  width:44px;height:44px;border-radius:13px;flex-shrink:0;
+  background:var(--gold-dim);display:flex;align-items:center;justify-content:center
+}
+.hub-card-ico svg{width:21px;height:21px;stroke:var(--gold);fill:none;stroke-width:1.8}
+.hub-card-body{flex:1;min-width:0}
+.hub-card-title{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.hub-card-sub{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.hub-card-meta{font-size:13px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;flex-shrink:0}
+.hub-soon{font-size:11px;color:var(--subtle);text-align:center;margin-top:22px;line-height:1.6}
+
+/* health breakdown */
+.health-hero{text-align:center;padding:8px 0 22px}
+.health-hero-score{font-size:58px;font-weight:700;letter-spacing:-2px;color:var(--text);font-variant-numeric:tabular-nums;line-height:1}
+.health-hero-score span{font-size:22px;color:var(--muted);font-weight:600}
+.health-hero-label{font-size:11px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.health-cat{
+  border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;
+  background:rgba(255,255,255,.02);transition:border-color .2s
+}
+.health-cat.open{border-color:rgba(199,168,103,.35)}
+.health-cat-hd{display:flex;align-items:center;gap:14px;padding:15px 16px;cursor:pointer}
+.health-cat-name{font-size:14px;font-weight:600;color:var(--text);flex:1}
+.health-cat-score{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.health-cat-chev{width:15px;height:15px;stroke:var(--muted);fill:none;stroke-width:2.2;transition:transform .25s;flex-shrink:0}
+.health-cat.open .health-cat-chev{transform:rotate(90deg)}
+.health-cat-bar{height:4px;border-radius:2px;background:rgba(255,255,255,.06);margin:0 16px;overflow:hidden}
+.health-cat-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.16,1,.3,1)}
+.health-cat-expl{
+  max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;
+  font-size:13px;color:var(--muted);line-height:1.65;padding:0 16px
+}
+.health-cat.open .health-cat-expl{max-height:260px;padding:12px 16px 16px}
+
+/* journal */
+.journal-search{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r-full);padding:11px 16px;font-size:13.5px;color:var(--text);
+  outline:none;margin-bottom:8px;transition:border-color .15s
+}
+.journal-search:focus{border-color:rgba(199,168,103,.35)}
+.journal-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.journal-chip{
+  font-size:11.5px;color:var(--muted);background:var(--surface2);
+  border:1px solid var(--border2);border-radius:999px;padding:5px 12px;cursor:pointer;transition:all .15s
+}
+.journal-chip.sel{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.journal-entry{
+  border-left:2px solid var(--gold);padding:2px 0 2px 16px;margin-bottom:22px
+}
+.journal-entry-date{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:.3px;margin-bottom:8px}
+.journal-entry-text{font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.journal-entry-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.journal-tag{
+  font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface3);
+  border-radius:6px;padding:3px 8px;font-variant-numeric:tabular-nums
+}
+.journal-empty{text-align:center;color:var(--muted);font-size:13.5px;line-height:1.7;padding:40px 10px}
+
+/* goals */
+.goal-card{
+  background:linear-gradient(168deg,rgba(30,33,46,.5),rgba(13,15,21,.6));
+  border:1px solid var(--border2);border-radius:16px;padding:18px;margin-bottom:14px
+}
+.goal-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.goal-name{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-.2px}
+.goal-timeline{font-size:11.5px;color:var(--muted);flex-shrink:0}
+.goal-metrics{display:flex;gap:22px;margin:16px 0 4px}
+.goal-metric-lbl{font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.goal-metric-val{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;margin-top:4px}
+.goal-metric-val.prob{color:var(--gold)}
+.goal-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:8px}
+.goal-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#9a7830,var(--gold));transition:width .7s cubic-bezier(.16,1,.3,1)}
+.goal-factors{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+.goal-factor{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.goal-factor svg{width:14px;height:14px;flex-shrink:0;margin-top:2px;fill:none;stroke-width:2.4}
+.goal-factor.pos svg{stroke:var(--green)}
+.goal-factor.neg svg{stroke:var(--red)}
+.goal-improve{
+  margin-top:14px;padding:12px 14px;background:var(--gold-glow);border:1px solid rgba(199,168,103,.25);
+  border-radius:12px;font-size:12.5px;color:var(--text);line-height:1.55
+}
+.goal-improve strong{color:var(--gold);font-weight:600}
+.hub-loading{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+
 /* paused (lapsed) banner — calm, not alarming */
 .paused-banner{
   display:none;align-items:center;gap:12px;
@@ -1065,9 +1174,12 @@ input,textarea{font-family:inherit}
         <span class="topbar-online">Active now</span>
       </div>
       <div class="topbar-right">
-        <div class="health-pill" onclick="App.openSettings()">
+        <div class="health-pill" onclick="App.openHub('health')">
           <span class="health-score" id="health-score">—</span>
           <span class="health-label">Portfolio Health</span>
+        </div>
+        <div class="bell-btn" onclick="App.openHub()" title="Advisor hub">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         </div>
         <div class="bell-btn" id="dev-btn" style="display:none" onclick="App.openDevPanel()" title="Developer">
           <svg viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
@@ -1133,6 +1245,14 @@ input,textarea{font-family:inherit}
       <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
     </div>
     <div id="dev-panel-body"></div>
+  </div>
+
+  <div class="panel panel-wide" id="hub-panel">
+    <div class="panel-hd">
+      <span class="panel-title" id="hub-title">Your Advisor</span>
+      <div class="panel-close" onclick="App.closeAll()"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+    </div>
+    <div id="hub-body"></div>
   </div>
 
   <!-- ════════ MEMBERSHIP / FEEDBACK OVERLAYS ════════ -->
@@ -3110,6 +3230,192 @@ App.ackAnnouncement = async function(id) {
   try { await App.apiFetch('/api/announcements/ack', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) }); } catch (e) {}
 };
 
+// ─── ADVISOR HUB ─────────────────────────────────────────
+// One elegant surface where the flagship features live and cross-link,
+// rather than scattered pages. Journal, Goals and Portfolio Health all read
+// from the same daily analysis (App.latestAnalysis) the advisor already
+// produces, so they stay perfectly consistent with the conversation.
+function scoreColor(n) {
+  if (n == null) return 'var(--muted)';
+  if (n >= 88) return 'var(--green)';
+  if (n >= 74) return 'var(--gold)';
+  if (n >= 60) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+App.openHub = function(view) {
+  document.getElementById('hub-panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('show');
+  if (view) App.hubShow(view); else App.renderHubHome();
+};
+
+App.renderHubHome = function() {
+  document.getElementById('hub-title').textContent = 'Your Advisor';
+  const a = App.latestAnalysis;
+  const health = a && a.portfolioHealthScore != null ? a.portfolioHealthScore : '—';
+  const goalsN = (a && a.goalAssessments) ? a.goalAssessments.length : 0;
+  document.getElementById('hub-body').innerHTML = `
+    <div class="hub-cards hub-anim">
+      <div class="hub-card" onclick="App.hubShow('health')">
+        <div class="hub-card-ico"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></div>
+        <div class="hub-card-body"><div class="hub-card-title">Portfolio Health</div><div class="hub-card-sub">Five categories, explained by your advisor</div></div>
+        <div class="hub-card-meta" style="color:${scoreColor(a && a.portfolioHealthScore)}">${health}</div>
+      </div>
+      <div class="hub-card" onclick="App.hubShow('journal')">
+        <div class="hub-card-ico"><svg viewBox="0 0 24 24"><path d="M4 4h13a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-3 2V4z"/><path d="M8 8h7M8 12h7"/></svg></div>
+        <div class="hub-card-body"><div class="hub-card-title">Advisor Journal</div><div class="hub-card-sub">A daily entry your advisor writes for you</div></div>
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="hub-card" onclick="App.hubShow('goals')">
+        <div class="hub-card-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.5"/></svg></div>
+        <div class="hub-card-body"><div class="hub-card-title">Goals</div><div class="hub-card-sub">Progress and probability toward what matters</div></div>
+        <div class="hub-card-meta">${goalsN || ''}</div>
+      </div>
+    </div>
+    <div class="hub-soon">More arriving soon — Earnings Calendar, Opportunity Feed,<br>Portfolio Replay, Snapshots, and your Advisor Memory Timeline.</div>`;
+};
+
+App.hubShow = function(view) {
+  if (view === 'health') return App.hubShowHealth();
+  if (view === 'journal') return App.hubShowJournal();
+  if (view === 'goals') return App.hubShowGoals();
+  return App.renderHubHome();
+};
+
+function hubBack() {
+  return `<div class="hub-back" onclick="App.renderHubHome()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Advisor</div>`;
+}
+
+App.hubShowHealth = function() {
+  document.getElementById('hub-title').textContent = 'Portfolio Health';
+  const a = App.latestAnalysis;
+  const body = document.getElementById('hub-body');
+  if (!a || !a.healthBreakdown) {
+    body.innerHTML = `${hubBack()}<div class="journal-empty hub-anim">Your advisor hasn't run a full review yet.<br>Tap "Run analysis now" and your Portfolio Health breakdown will appear here.</div>`;
+    return;
+  }
+  const b = a.healthBreakdown;
+  const cats = [
+    ['Diversification', b.diversification],
+    ['Risk', b.risk],
+    ['Growth Potential', b.growthPotential],
+    ['Stability', b.stability],
+    ['Valuation', b.valuation],
+  ].filter(([, v]) => v);
+  body.innerHTML = `${hubBack()}
+    <div class="hub-anim">
+      <div class="health-hero">
+        <div class="health-hero-score" style="color:${scoreColor(a.portfolioHealthScore)}">${a.portfolioHealthScore}<span> / 100</span></div>
+        <div class="health-hero-label">Portfolio Health</div>
+      </div>
+      ${cats.map(([name, v], i) => `
+        <div class="health-cat" id="hcat-${i}">
+          <div class="health-cat-hd" onclick="App.toggleHealthCat(${i})">
+            <span class="health-cat-name">${name}</span>
+            <span class="health-cat-score" style="color:${scoreColor(v.score)}">${v.score}</span>
+            <svg class="health-cat-chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="health-cat-bar"><div class="health-cat-fill" style="width:${v.score}%;background:${scoreColor(v.score)}"></div></div>
+          <div class="health-cat-expl">${esc(v.explanation || '')}</div>
+        </div>`).join('')}
+    </div>`;
+};
+
+App.toggleHealthCat = function(i) {
+  document.getElementById('hcat-' + i).classList.toggle('open');
+};
+
+App._journalFilter = { q: '', action: '' };
+App.hubShowJournal = async function() {
+  document.getElementById('hub-title').textContent = 'Advisor Journal';
+  const body = document.getElementById('hub-body');
+  body.innerHTML = `${hubBack()}<div class="hub-loading hub-anim">Loading your journal…</div>`;
+  await App.renderJournal();
+};
+
+App.renderJournal = async function() {
+  const f = App._journalFilter;
+  const params = new URLSearchParams();
+  if (f.q) params.set('q', f.q);
+  if (f.action) params.set('action', f.action);
+  let entries = [];
+  try {
+    const data = await App.apiFetch('/api/journal' + (params.toString() ? '?' + params : '')).then(r => r.json());
+    entries = data.entries || [];
+  } catch (e) {}
+  const actions = ['buy', 'trim', 'sell'];
+  const list = entries.length
+    ? entries.map(e => `
+        <div class="journal-entry">
+          <div class="journal-entry-date">${journalDate(e.date, e.at)}</div>
+          <div class="journal-entry-text">${esc(e.text)}</div>
+          ${(e.companies && e.companies.length) || e.health != null ? `<div class="journal-entry-tags">
+            ${e.health != null ? `<span class="journal-tag">Health ${e.health}</span>` : ''}
+            ${(e.companies || []).map(c => `<span class="journal-tag">${esc(c)}</span>`).join('')}
+          </div>` : ''}
+        </div>`).join('')
+    : `<div class="journal-empty">${f.q || f.action ? 'No journal entries match that search.' : "Your advisor hasn't written a journal entry yet.<br>The first arrives after your next daily review."}</div>`;
+
+  document.getElementById('hub-body').innerHTML = `${hubBack()}
+    <div class="hub-anim">
+      <input class="journal-search" id="journal-q" placeholder="Search by company, or a word…" value="${esc(f.q)}">
+      <div class="journal-filters">
+        ${actions.map(a => `<div class="journal-chip ${f.action === a ? 'sel' : ''}" onclick="App.journalToggleAction('${a}')">${a.charAt(0).toUpperCase() + a.slice(1)} calls</div>`).join('')}
+      </div>
+      ${list}
+    </div>`;
+
+  const inp = document.getElementById('journal-q');
+  if (inp) {
+    inp.oninput = () => { clearTimeout(App._journalDebounce); App._journalDebounce = setTimeout(() => { App._journalFilter.q = inp.value.trim(); App.renderJournal(); }, 350); };
+    if (document.activeElement !== inp && f.q) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  }
+};
+
+App.journalToggleAction = function(a) {
+  App._journalFilter.action = App._journalFilter.action === a ? '' : a;
+  App.renderJournal();
+};
+
+function journalDate(date, at) {
+  const d = new Date(at || date);
+  if (isNaN(d)) return date || '';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+App.hubShowGoals = function() {
+  document.getElementById('hub-title').textContent = 'Goals';
+  const a = App.latestAnalysis;
+  const body = document.getElementById('hub-body');
+  const goals = (a && a.goalAssessments) || [];
+  if (!goals.length) {
+    body.innerHTML = `${hubBack()}<div class="journal-empty hub-anim">Your advisor will assess your goals on the next daily review.<br>Set your goals during onboarding, or ask your advisor about them anytime.</div>`;
+    return;
+  }
+  const check = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+  const minus = '<svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+  body.innerHTML = `${hubBack()}
+    <div class="hub-anim">
+      ${goals.map(g => `
+        <div class="goal-card">
+          <div class="goal-hd">
+            <span class="goal-name">${esc(g.goal)}</span>
+            <span class="goal-timeline">${esc(g.timeline || '')}</span>
+          </div>
+          <div class="goal-metrics">
+            <div><div class="goal-metric-lbl">Progress</div><div class="goal-metric-val">${g.progressPct}%</div></div>
+            <div><div class="goal-metric-lbl">Probability</div><div class="goal-metric-val prob">${g.probabilityPct}%</div></div>
+          </div>
+          <div class="goal-bar"><div class="goal-bar-fill" style="width:${g.progressPct}%"></div></div>
+          <div class="goal-factors">
+            ${(g.positiveFactors || []).map(x => `<div class="goal-factor pos">${check}<span>${esc(x)}</span></div>`).join('')}
+            ${(g.negativeFactors || []).map(x => `<div class="goal-factor neg">${minus}<span>${esc(x)}</span></div>`).join('')}
+          </div>
+          ${g.toImprove ? `<div class="goal-improve"><strong>To improve the odds:</strong> ${esc(g.toImprove)}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+};
+
 App.renderSettings = function() {
   const p = App.portfolioView;
   if (!p) return;
@@ -3242,6 +3548,7 @@ App.closeAll = function() {
   document.getElementById('notif-panel').classList.remove('open');
   document.getElementById('settings-panel').classList.remove('open');
   document.getElementById('dev-panel').classList.remove('open');
+  document.getElementById('hub-panel').classList.remove('open');
   document.getElementById('backdrop').classList.remove('show');
 };
 
