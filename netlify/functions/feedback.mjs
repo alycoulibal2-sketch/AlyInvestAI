@@ -56,7 +56,7 @@ export default withAuth(async (req, context, user) => {
     if (!text && !rating) return Response.json({ error: 'Nothing to submit' }, { status: 400 });
 
     const entries = (await store().get('feedback:entries', { type: 'json' })) || [];
-    entries.push({ userId: user.id, email: user.email || null, kind: body.kind, text, rating, at: new Date().toISOString() });
+    entries.push({ id: Date.now(), userId: user.id, email: user.email || null, kind: body.kind, text, rating, at: new Date().toISOString(), reviewed: false });
     await store().set('feedback:entries', JSON.stringify(entries.slice(-1000)));
     return Response.json({ ok: true });
   }

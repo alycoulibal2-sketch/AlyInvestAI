@@ -14,11 +14,14 @@ export default withAuth(async (req, context, user) => {
     return Response.json({ items: await announcements.list() });
   }
   if (req.method === 'POST') {
-    const { title, body } = await req.json();
+    const { title, body, scheduledFor } = await req.json();
     if (!String(title || '').trim() && !String(body || '').trim()) {
       return Response.json({ error: 'Nothing to post' }, { status: 400 });
     }
-    const entry = await announcements.create({ title, body, createdBy: user.email });
+    if (scheduledFor && isNaN(Date.parse(scheduledFor))) {
+      return Response.json({ error: 'Invalid schedule date' }, { status: 400 });
+    }
+    const entry = await announcements.create({ title, body, createdBy: user.email, scheduledFor });
     return Response.json(entry);
   }
   if (req.method === 'DELETE') {
