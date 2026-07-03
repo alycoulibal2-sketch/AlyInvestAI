@@ -804,6 +804,47 @@ input,textarea{font-family:inherit}
 .limit-card-body{font-size:12.5px;color:var(--muted);line-height:1.6}
 .limit-card-cta{margin-top:12px;display:inline-block;font-size:12.5px;font-weight:600;color:var(--gold);cursor:pointer}
 
+/* ── DEVELOPER SECTION (admin-only) ── */
+.admin-compose{
+  background:rgba(255,255,255,.025);border:1px solid var(--border2);
+  border-radius:14px;padding:14px
+}
+.admin-compose input{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  border-radius:10px;padding:11px 13px;font-size:13.5px;color:var(--text);outline:none
+}
+.admin-compose input:focus{border-color:rgba(199,168,103,.35)}
+.admin-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.admin-ann-row{
+  display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px
+}
+.admin-ann-body{flex:1;min-width:0}
+.admin-ann-title{font-size:13px;font-weight:600;color:var(--text)}
+.admin-ann-text{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px;white-space:pre-wrap}
+.admin-ann-time{font-size:10.5px;color:var(--subtle);margin-top:6px}
+.admin-ann-del{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);font-size:16px;line-height:1;cursor:pointer;transition:all .15s
+}
+.admin-ann-del:hover{background:var(--red-dim);color:var(--red)}
+.admin-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;margin-left:6px;
+  background:var(--surface3);color:var(--muted);font-size:10.5px;font-weight:700;
+  border-radius:999px;vertical-align:middle
+}
+.admin-fb-row{
+  padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;margin-bottom:8px
+}
+.admin-fb-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.admin-fb-stars{font-size:11px;color:var(--gold);letter-spacing:1px}
+.admin-fb-time{font-size:10.5px;color:var(--subtle);margin-left:auto}
+.admin-fb-text{font-size:12.5px;color:var(--text);line-height:1.55;margin-top:8px}
+.admin-fb-email{font-size:10.5px;color:var(--subtle);margin-top:6px}
+
 /* paused (lapsed) banner — calm, not alarming */
 .paused-banner{
   display:none;align-items:center;gap:12px;
@@ -1620,6 +1661,9 @@ App.loadAll = async function() {
   App.renderSettings();
   App.startLiveRefresh();
   App.applyMembershipState();
+  if (App.currentUser && App.currentUser.isAdmin) {
+    App.loadAdminData().then(() => App.renderSettings());
+  }
 };
 
 // ─── MEMBERSHIP ──────────────────────────────────────────
@@ -1648,6 +1692,7 @@ App.applyMembershipState = function() {
     App._paywallShownThisSession = true;
     App.showPaywall();
   } else {
+    App.checkAnnouncement();
     App.maybeShowFeedbackPrompt();
   }
 };
@@ -2886,6 +2931,102 @@ function feedbackSectionHtml() {
     </div>`;
 }
 
+// Admin-only: post/manage announcements every user sees once, and review
+// everything submitted through Founding Member Feedback. Gated purely on
+// App.currentUser.isAdmin (client-side, for display only — every admin
+// endpoint independently re-checks isAdmin(email) server-side).
+function developerSectionHtml() {
+  const admin = App._admin || { announcements: [], feedback: [], votes: {} };
+  return `
+    <div class="s-section">
+      <div class="s-section-title">Developer</div>
+      <div class="admin-compose">
+        <input id="ann-title" placeholder="Announcement title" style="margin-bottom:8px">
+        <textarea class="fb-text" id="ann-body" placeholder="What's new — e.g. when a feature was introduced" rows="3"></textarea>
+        <button class="mini-btn" style="margin-top:10px" onclick="App.postAnnouncement(this)">Post announcement</button>
+      </div>
+      ${admin.announcements.length ? `<div class="admin-list">${admin.announcements.map(a => `
+        <div class="admin-ann-row">
+          <div class="admin-ann-body">
+            <div class="admin-ann-title">${esc(a.title)}</div>
+            ${a.body ? `<div class="admin-ann-text">${esc(a.body)}</div>` : ''}
+            <div class="admin-ann-time">${timeAgo(a.createdAt)}</div>
+          </div>
+          <div class="admin-ann-del" onclick="App.deleteAnnouncement(${a.id})" title="Delete">&times;</div>
+        </div>`).join('')}</div>` : ''}
+    </div>
+
+    <div class="s-section">
+      <div class="s-section-title">Founding Member Feedback<span class="admin-count">${admin.feedback.length}</span></div>
+      ${admin.feedback.length ? admin.feedback.map(f => `
+        <div class="admin-fb-row">
+          <div class="admin-fb-hd">
+            <span class="ntag ntag-update">${esc(f.kind)}</span>
+            ${f.rating ? `<span class="admin-fb-stars">${'★'.repeat(f.rating)}${'☆'.repeat(5 - f.rating)}</span>` : ''}
+            <span class="admin-fb-time">${timeAgo(f.at)}</span>
+          </div>
+          ${f.text ? `<div class="admin-fb-text">${esc(f.text)}</div>` : ''}
+          <div class="admin-fb-email">${esc(f.email || 'unknown')}</div>
+        </div>`).join('') : '<div class="glass-sub" style="margin:0">No feedback yet.</div>'}
+    </div>`;
+}
+
+App.loadAdminData = async function() {
+  try {
+    const [annRes, fbRes] = await Promise.all([
+      App.apiFetch('/api/admin/announcements').then(r => r.json()),
+      App.apiFetch('/api/admin/feedback').then(r => r.json()),
+    ]);
+    App._admin = { announcements: annRes.items || [], feedback: fbRes.entries || [], votes: fbRes.votes || {} };
+  } catch (e) { App._admin = App._admin || { announcements: [], feedback: [], votes: {} }; }
+};
+
+App.postAnnouncement = async function(btn) {
+  const title = (document.getElementById('ann-title') || {}).value || '';
+  const body = (document.getElementById('ann-body') || {}).value || '';
+  if (!title.trim() && !body.trim()) return;
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Posting…'; }
+  try {
+    await App.apiFetch('/api/admin/announcements', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title, body }),
+    });
+    await App.loadAdminData();
+    App.renderSettings();
+  } finally {
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Post announcement'; }
+  }
+};
+
+App.deleteAnnouncement = async function(id) {
+  try {
+    await App.apiFetch('/api/admin/announcements', {
+      method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }),
+    });
+    await App.loadAdminData();
+    App.renderSettings();
+  } catch (e) {}
+};
+
+// Shown to every signed-in account (once) whenever a developer posts a new
+// announcement — same one-time-seen pattern as the Founding Member welcome.
+App.checkAnnouncement = async function() {
+  try {
+    const { announcement } = await App.apiFetch('/api/announcements/latest').then(r => r.json());
+    if (!announcement) return;
+    openGlass(`
+      <div style="text-align:center"><span class="member-badge">Announcement</span></div>
+      <div class="glass-title" style="text-align:center">${esc(announcement.title)}</div>
+      ${announcement.body ? `<div class="glass-sub" style="text-align:center">${esc(announcement.body).replace(/\n/g, '<br>')}</div>` : ''}
+      <button class="flow-btn" style="margin-top:24px" onclick="App.ackAnnouncement(${announcement.id})">Got it</button>
+    `);
+  } catch (e) { /* not critical */ }
+};
+
+App.ackAnnouncement = async function(id) {
+  App.closeGlass();
+  try { await App.apiFetch('/api/announcements/ack', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) }); } catch (e) {}
+};
+
 App.renderSettings = function() {
   const p = App.portfolioView;
   if (!p) return;
@@ -2982,6 +3123,8 @@ App.renderSettings = function() {
         ${bs.type ? `<button class="mini-btn" onclick="App.disconnectBroker()">Disconnect</button>` : ''}
       </div>
     </div>
+
+    ${App.currentUser && App.currentUser.isAdmin ? developerSectionHtml() : ''}
 
     <div class="s-section">
       <div class="s-section-title">Account</div>
