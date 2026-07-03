@@ -5,9 +5,7 @@
 //   node capture-frames.js             -> all frames at 24fps
 const path = require('path');
 const fs = require('fs');
-const puppeteer = require(path.join(
-  'C:/Users/User/AppData/Local/Temp/claude/C--Users-User/d18cd551-be7d-4a63-a234-b70053f1a8d0/scratchpad/aly/node_modules/puppeteer-core'
-));
+const puppeteer = require('puppeteer-core'); // installed in promo/tools/node_modules
 
 const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const PROMO = path.join(__dirname, '..');

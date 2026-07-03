@@ -1,7 +1,7 @@
 window.TIMELINE = {
   "width": 1280,
   "height": 720,
-  "total": 44.942,
+  "total": 42.11,
   "scenes": [
     {
       "id": "hook",
@@ -12,7 +12,7 @@ window.TIMELINE = {
       "sub": "Most investors are on their own. You don't have to be.",
       "voiceover": "What if a personal wealth advisor watched your portfolio around the clock?",
       "start": 0,
-      "end": 5.342,
+      "end": 4.502,
       "voStart": 0.45
     },
     {
@@ -24,9 +24,9 @@ window.TIMELINE = {
       "headline": "Meet Corvexsa",
       "sub": "Your personal AI investment advisor",
       "voiceover": "Meet Corvexsa — your personal AI investment advisor.",
-      "start": 4.892,
-      "end": 9.826,
-      "voStart": 5.342
+      "start": 4.052,
+      "end": 9.274,
+      "voStart": 4.502
     },
     {
       "id": "connect",
@@ -37,9 +37,9 @@ window.TIMELINE = {
       "headline": "Read-only. Always.",
       "sub": "Never holds funds. Never executes trades. Only advises.",
       "voiceover": "Connect your broker in seconds. Read-only, always — Corvexsa never touches your money.",
-      "start": 9.376,
-      "end": 16.782,
-      "voStart": 9.826
+      "start": 8.824,
+      "end": 15.846,
+      "voStart": 9.274
     },
     {
       "id": "analysis",
@@ -50,9 +50,9 @@ window.TIMELINE = {
       "headline": "A deep review, daily",
       "sub": "Clear buy, hold, or trim calls — with the reasoning behind them",
       "voiceover": "Every twenty-four hours, a deep review: clear buy, hold, or trim calls, with exact quantities and the reasoning.",
-      "start": 16.332,
-      "end": 24.914,
-      "voStart": 16.782
+      "start": 15.396,
+      "end": 24.842,
+      "voStart": 15.846
     },
     {
       "id": "alerts",
@@ -63,9 +63,9 @@ window.TIMELINE = {
       "headline": "Vigilance, delivered",
       "sub": "Opportunities surfaced. Risks flagged early.",
       "voiceover": "It scans the market, and alerts your phone the moment something material changes.",
-      "start": 24.464,
-      "end": 30.334,
-      "voStart": 24.914
+      "start": 24.392,
+      "end": 29.71,
+      "voStart": 24.842
     },
     {
       "id": "conversation",
@@ -76,9 +76,9 @@ window.TIMELINE = {
       "headline": "One conversation",
       "sub": "An advisor that remembers you, your goals, your preferences",
       "voiceover": "No dashboards. Just one conversation, with an advisor who remembers you.",
-      "start": 29.884,
-      "end": 36.714,
-      "voStart": 30.334
+      "start": 29.26,
+      "end": 35.154,
+      "voStart": 29.71
     },
     {
       "id": "cta",
@@ -89,9 +89,9 @@ window.TIMELINE = {
       "sub": "Smarter investing starts with a conversation.",
       "voiceover": "Smarter investing starts with a conversation. Start yours at Corvexsa dot com.",
       "disclaimer": "Corvexsa provides analysis only. It never executes trades or holds funds. Investing involves risk, including possible loss of principal. Not financial advice.",
-      "start": 36.264,
-      "end": 44.942,
-      "voStart": 36.714
+      "start": 34.704,
+      "end": 42.11,
+      "voStart": 35.154
     }
   ]
 };
