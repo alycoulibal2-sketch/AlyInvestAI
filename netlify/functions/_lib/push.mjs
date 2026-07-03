@@ -49,11 +49,16 @@ export async function removeSubscription(userId, endpoint) {
 
 // Sends to every device this one user has subscribed on (not a broadcast to
 // all users — each user only ever hears about their own portfolio).
-export async function sendToUser(userId, payload) {
+// `urgency` ('very-low'|'low'|'normal'|'high') is a real Web Push protocol
+// header — push services and mobile OSes use it to decide whether to wake
+// the device immediately or batch delivery, so it's a genuine (not
+// cosmetic) "priority notifications" lever for Premium/Elite.
+export async function sendToUser(userId, payload, { urgency } = {}) {
   if (!VAPID_CONFIGURED) return { sent: 0, pruned: 0, skipped: 'vapid-not-configured' };
   const subs = await loadSubs(userId);
   const body = JSON.stringify(payload);
-  const results = await Promise.allSettled(subs.map(s => webpush.sendNotification(s, body)));
+  const options = urgency ? { urgency } : undefined;
+  const results = await Promise.allSettled(subs.map(s => webpush.sendNotification(s, body, options)));
   const dead = [];
   results.forEach((r, i) => {
     if (r.status === 'rejected' && (r.reason.statusCode === 404 || r.reason.statusCode === 410)) {

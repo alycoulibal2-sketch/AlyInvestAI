@@ -737,6 +737,73 @@ input,textarea{font-family:inherit}
 .member-progress{height:4px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:12px}
 .member-progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#9a7830,var(--gold));transition:width .6s ease}
 
+/* ── PRICING (3-tier paywall) ── */
+.glass-card.wide{max-width:940px}
+.tier-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+  margin-top:26px;align-items:stretch
+}
+@media (max-width:820px){.tier-grid{grid-template-columns:1fr;max-width:380px;margin-left:auto;margin-right:auto}}
+.tier-card{
+  position:relative;display:flex;flex-direction:column;
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--border2);border-radius:20px;
+  padding:26px 22px 22px;
+  transition:transform .25s cubic-bezier(.16,1,.3,1),border-color .25s,background .25s
+}
+.tier-card.popular{
+  background:linear-gradient(168deg,rgba(199,168,103,.09),rgba(199,168,103,.02));
+  border-color:rgba(199,168,103,.4);
+  box-shadow:0 20px 60px rgba(199,168,103,.08)
+}
+@media (min-width:821px){.tier-card.popular{transform:translateY(-8px)}}
+.tier-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  font-size:10.5px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+  color:#07080c;background:var(--gold);padding:5px 14px;border-radius:999px;
+  white-space:nowrap;box-shadow:0 6px 18px rgba(199,168,103,.35)
+}
+.tier-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.tier-price-row{display:flex;align-items:baseline;gap:4px;margin-top:10px}
+.tier-price{font-size:34px;font-weight:700;color:var(--text);letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.tier-period{font-size:13px;color:var(--muted)}
+.tier-everything{font-size:11.5px;color:var(--gold);font-weight:600;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.tier-features{display:flex;flex-direction:column;gap:9px;margin-top:12px;flex:1}
+.tier-features .feature-item{font-size:12.5px}
+.tier-cta{
+  margin-top:20px;width:100%;padding:12px;border-radius:12px;
+  font-size:14px;font-weight:600;text-align:center;transition:all .15s
+}
+.tier-cta.primary{background:var(--gold);color:#07080c}
+.tier-cta.primary:hover{background:#d4b472}
+.tier-cta.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.tier-cta.secondary:hover{border-color:rgba(199,168,103,.4)}
+.tier-cta.current{background:transparent;color:var(--muted);border:1px solid var(--border2);cursor:default}
+.pricing-footnote{text-align:center;font-size:12px;color:var(--subtle);margin-top:24px;line-height:1.6}
+
+/* ── ADVISOR INTERACTIONS ── */
+.interactions-meter{margin-top:12px}
+.interactions-meter-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+.interactions-meter-lbl{font-size:12px;color:var(--muted);font-weight:500}
+.interactions-meter-val{font-size:12.5px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.interactions-meter-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.interactions-meter-fill{height:100%;border-radius:3px;background:var(--gold);transition:width .5s cubic-bezier(.16,1,.3,1)}
+.interactions-meter-fill.low{background:var(--red)}
+.interactions-unlimited{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--gold);
+  background:var(--gold-dim);padding:5px 12px;border-radius:999px;margin-top:4px
+}
+.interactions-unlimited svg{width:11px;height:11px;stroke:var(--gold);stroke-width:3;fill:none;flex-shrink:0}
+
+/* calm, non-blocking limit-reached message in the conversation feed */
+.limit-card{
+  background:linear-gradient(168deg,rgba(30,33,46,.55),rgba(13,15,21,.65));
+  border:1px solid var(--border2);border-radius:16px;padding:18px 18px 16px;margin:6px 0
+}
+.limit-card-title{font-size:13.5px;font-weight:600;color:var(--text);margin-bottom:6px}
+.limit-card-body{font-size:12.5px;color:var(--muted);line-height:1.6}
+.limit-card-cta{margin-top:12px;display:inline-block;font-size:12.5px;font-weight:600;color:var(--gold);cursor:pointer}
+
 /* paused (lapsed) banner — calm, not alarming */
 .paused-banner{
   display:none;align-items:center;gap:12px;
@@ -963,7 +1030,7 @@ input,textarea{font-family:inherit}
     <div class="paused-banner" id="paused-banner">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg>
       <span class="paused-txt">Portfolio monitoring is paused. Your data and Advisor Memory are safe.</span>
-      <button class="paused-cta" onclick="App.showPaywall()">Resume Premium</button>
+      <button class="paused-cta" onclick="App.showPaywall()">View plans</button>
     </div>
 
     <div class="conversation">
@@ -1557,13 +1624,6 @@ App.loadAll = async function() {
 
 // ─── MEMBERSHIP ──────────────────────────────────────────
 const CHECK_SVG = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
-const PREMIUM_FEATURES = [
-  'Unlimited Advisor conversations', 'Unlimited portfolio analysis',
-  'Daily portfolio monitoring', 'Smart notifications',
-  'Investment Timeline', 'Advisor Memory',
-  'Portfolio Health Score', '“What Changed?” explanations',
-  'Priority AI processing', 'New features as they launch',
-];
 function featureListHtml(items, twoCol) {
   return `<div class="feature-list${twoCol ? ' two-col' : ''}">` +
     items.map(f => `<div class="feature-item">${CHECK_SVG}<span>${f}</span></div>`).join('') + '</div>';
@@ -1571,6 +1631,7 @@ function featureListHtml(items, twoCol) {
 
 function openGlass(html) {
   document.getElementById('glass-card').innerHTML = html;
+  document.getElementById('glass-card').classList.remove('wide'); // only the pricing screen opts into the wide layout
   document.getElementById('glass-veil').classList.add('show');
 }
 App.closeGlass = function() {
@@ -1595,15 +1656,10 @@ App.showFoundingWelcome = function() {
   openGlass(`
     <div style="text-align:center"><span class="member-badge">✦ Founding Member</span></div>
     <div class="glass-title" style="text-align:center">Welcome, Founding Member.</div>
-    <div class="glass-sub" style="text-align:center">You're joining Corvexsa during its launch.<br>
-      For the next <strong>2 months</strong> you'll enjoy every Premium feature — completely free.</div>
-    <div class="glass-divider"></div>
-    ${featureListHtml(['Full Premium access — every feature unlocked','Unlimited Advisor conversations','Unlimited portfolio analysis & notifications','Priority access to new features'], false)}
-    <div class="glass-divider"></div>
-    <div class="glass-sub" style="font-size:13.5px;text-align:center;margin-top:0">
-      In return, we'd love your feedback. Your suggestions will directly influence the future of Corvexsa.</div>
-    <button class="flow-btn" style="margin-top:24px" onclick="App.ackWelcome()">Start My Free Membership</button>
-    <div class="glass-footnote">A limited-time program, available only during launch.</div>
+    <div class="glass-sub" style="text-align:center">You're one of the first people helping build Corvexsa.</div>
+    <div class="glass-sub" style="text-align:center">Enjoy every Premium feature free for the next 2 months.</div>
+    <div class="glass-sub" style="text-align:center">Your feedback will directly influence future updates.</div>
+    <button class="flow-btn" style="margin-top:26px" onclick="App.ackWelcome()">Start My Journey</button>
   `);
 };
 
@@ -1615,36 +1671,105 @@ App.ackWelcome = async function() {
   } catch (e) { /* re-shown next load at worst */ }
 };
 
-App.showPaywall = function() {
+// Tiers are fetched once and cached — the pricing shown here can never drift
+// from what Stripe actually charges, since both read from the same
+// tiers.mjs on the server.
+App._tiersCache = null;
+async function loadTiers() {
+  if (App._tiersCache) return App._tiersCache;
+  const data = await App.apiFetch('/api/billing/tiers').then(r => r.json());
+  App._tiersCache = data.tiers;
+  return App._tiersCache;
+}
+
+const usd = (cents) => '$' + (cents / 100).toFixed(2).replace(/\.00$/, '');
+
+function tierCardHtml(tier, currentTier) {
+  const isCurrent = currentTier === tier.id;
+  const currentAmount = currentTier ? (App._tiersCache || []).find(t => t.id === currentTier)?.amount : null;
+  let ctaLabel, ctaCls;
+  if (isCurrent) { ctaLabel = 'Current plan'; ctaCls = 'current'; }
+  else if (currentTier) { ctaLabel = currentAmount != null && tier.amount > currentAmount ? `Upgrade to ${tier.name}` : `Switch to ${tier.name}`; ctaCls = tier.popular ? 'primary' : 'secondary'; }
+  else { ctaLabel = `Continue with ${tier.name}`; ctaCls = tier.popular ? 'primary' : 'secondary'; }
+
+  return `
+    <div class="tier-card ${tier.popular ? 'popular' : ''}">
+      ${tier.popular ? '<div class="tier-badge">Most Popular</div>' : ''}
+      <div class="tier-name">${tier.name}</div>
+      <div class="tier-price-row"><span class="tier-price">${usd(tier.amount)}</span><span class="tier-period">/ month</span></div>
+      ${tier.everythingIn ? `<div class="tier-everything">Everything in ${tier.everythingIn.charAt(0).toUpperCase() + tier.everythingIn.slice(1)}, plus</div>` : ''}
+      <div class="tier-features">${tier.features.map(f => `<div class="feature-item">${CHECK_SVG}<span>${f}</span></div>`).join('')}</div>
+      <button class="tier-cta ${ctaCls}" ${isCurrent ? 'disabled' : `onclick="App.chooseTier('${tier.id}', this)"`}>${ctaLabel}</button>
+    </div>`;
+}
+
+App.showPaywall = async function() {
   const m = App.membership || {};
   openGlass(`
     <div style="text-align:center"><span class="member-badge">Corvexsa Premium</span></div>
     <div class="glass-title" style="text-align:center">Continue with Corvexsa Premium</div>
-    <div class="glass-sub" style="text-align:center"><strong>Your advisor has learned your investing style.</strong><br>
-      Keep your personalized advisor, investment memory, timeline and daily portfolio monitoring active.</div>
-    <div class="glass-divider"></div>
-    <div class="price-row"><span class="price-big">$14.99</span><span class="price-per">/ month</span></div>
-    <div class="price-note">One plan. Everything included. Cancel anytime.</div>
-    <div class="glass-divider"></div>
-    ${featureListHtml(PREMIUM_FEATURES, true)}
-    <button class="flow-btn" style="margin-top:26px" onclick="App.subscribe(this)">Continue with Premium</button>
-    ${m.status === 'lapsed' ? '<button class="flow-btn-ghost" onclick="App.closeGlass()">Not now</button>' : '<button class="flow-btn-ghost" onclick="App.closeGlass()">Close</button>'}
-    <div class="glass-footnote">Whatever you decide, your Advisor Memory and Investment Timeline are always preserved.</div>
+    <div class="glass-sub" style="text-align:center">Keep your advisor, portfolio monitoring, Advisor Memory, Investment Timeline and personalized recommendations active.</div>
+    <div id="tier-grid-host"><div class="tier-grid">${[1,2,3].map(() => `<div class="tier-card"><div style="height:220px"></div></div>`).join('')}</div></div>
+    <div class="pricing-footnote">Cancel or change your plan anytime. Whatever you decide, your Advisor Memory and Investment Timeline are always preserved.</div>
+    ${m.status === 'lapsed' ? '<button class="flow-btn-ghost" style="margin-top:14px" onclick="App.closeGlass()">Not now</button>' : '<button class="flow-btn-ghost" style="margin-top:14px" onclick="App.closeGlass()">Close</button>'}
   `);
+  document.getElementById('glass-card').classList.add('wide');
+  try {
+    const tiers = await loadTiers();
+    const currentTier = m.status === 'subscribed' ? m.tier : null;
+    document.getElementById('tier-grid-host').innerHTML = `<div class="tier-grid">${tiers.map(t => tierCardHtml(t, currentTier)).join('')}</div>`;
+  } catch (e) {
+    document.getElementById('tier-grid-host').innerHTML = `<div class="glass-sub" style="text-align:center;margin-top:20px">Could not load plans — please try again in a moment.</div>`;
+  }
 };
 
-// Hands off to Stripe Checkout. Membership flips to subscribed only when
-// Stripe's webhook confirms payment; on return we poll for that.
-App.subscribe = async function(btn) {
-  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Opening secure checkout…'; }
+// Hands off to Stripe Checkout for a new subscription, or — if already
+// subscribed — swaps the price on the existing subscription directly
+// (billing-checkout.mjs tells the two cases apart) and Stripe prorates.
+App.chooseTier = async function(tierId, btn) {
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'One moment…'; }
   try {
-    const res = await App.apiFetch('/api/billing/checkout', { method: 'POST' });
+    const res = await App.apiFetch('/api/billing/checkout', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tier: tierId }),
+    });
     const data = await res.json();
-    if (!res.ok || !data.url) throw new Error(data.error || 'Checkout unavailable');
-    window.location.href = data.url; // Stripe-hosted checkout
+    if (!res.ok) throw new Error(data.error || 'Unavailable');
+    if (data.url) { window.location.href = data.url; return; } // new subscription — Stripe-hosted checkout
+    if (data.changed) { App._tierChangeTarget = tierId; await App.handlePlanChangeReturn(); return; } // plan swap on existing subscription
   } catch (e) {
-    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Continue with Premium'; }
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; App.showPaywall(); }
   }
+};
+
+// Polls membership until the swapped tier is confirmed by
+// customer.subscription.updated, then celebrates — same pattern as a new
+// subscription's checkout return.
+App.handlePlanChangeReturn = async function() {
+  const target = App._tierChangeTarget;
+  for (let i = 0; i < 10; i++) {
+    const m = await App.apiFetch('/api/membership').then(r => r.json());
+    if (m.tier === target) {
+      App.membership = m;
+      App.renderSettings();
+      const tiers = await loadTiers();
+      const tier = tiers.find(t => t.id === target);
+      openGlass(`
+        <div class="fb-success">
+          <div class="fb-success-ico">${CHECK_SVG}</div>
+          <div class="glass-title" style="margin-top:0;font-size:24px">You're now on ${tier ? tier.name : target}.</div>
+          <div class="glass-sub">Your plan has changed and takes effect immediately.</div>
+        </div>
+        <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass()">Done</button>
+      `);
+      return;
+    }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  openGlass(`
+    <div class="glass-title" style="font-size:22px;text-align:center">Updating your plan</div>
+    <div class="glass-sub" style="text-align:center">This can take a moment — it will update on its own.</div>
+    <button class="flow-btn" style="margin-top:20px" onclick="App.closeGlass()">Continue</button>
+  `);
 };
 
 // Back from Stripe: ?billing=success — the webhook usually lands within a
@@ -1662,10 +1787,12 @@ App.handleBillingReturn = async function() {
         App.membership = m;
         document.getElementById('paused-banner').classList.remove('show');
         App.renderSettings();
+        const tiers = await loadTiers().catch(() => []);
+        const tier = tiers.find(t => t.id === m.tier);
         openGlass(`
           <div class="fb-success">
             <div class="fb-success-ico">${CHECK_SVG}</div>
-            <div class="glass-title" style="margin-top:0;font-size:24px">Welcome to Premium.</div>
+            <div class="glass-title" style="margin-top:0;font-size:24px">Welcome to ${tier ? tier.name : 'Premium'}.</div>
             <div class="glass-sub">Your subscription is active. Your advisor is watching your portfolio every day.<br>Thank you for being part of Corvexsa.</div>
           </div>
           <button class="flow-btn" style="margin-top:18px" onclick="App.closeGlass(); App.loadAll();">Continue</button>
@@ -1934,9 +2061,17 @@ App._voiceSend = async function(text) {
     });
     const data = await res.json();
     if (myReq !== v.reqId || !v.open) return; // closed or superseded mid-flight
+
+    if (data.limitReached) {
+      $m(limitCard());
+      if (App.membership) { App.membership.interactions = data.interactions; App.renderSettings(); }
+      App._voiceSpeak(data.audio, data.spoken); // spoken aloud, then voice mode simply resumes listening
+      return;
+    }
     if (!res.ok || !data.reply) throw new Error(data.error || 'voice chat failed');
 
     $m(typeof data.reply === 'object' ? bubbleAdvisor(data.reply) : bubbleA(data.reply));
+    if (App.membership && data.interactions) App.membership.interactions = data.interactions;
     App._voiceSpeak(data.audio, data.spoken || (data.reply && data.reply.shortAnswer) || '');
   } catch (err) {
     if (err && err.message === 'membership_required') { App.closeVoice(); return; }
@@ -2005,10 +2140,10 @@ App.showVoiceUnsupported = function() {
 
 App.showVoicePaywall = function() {
   openGlass(`
-    <div style="text-align:center"><span class="member-badge">✦ Premium</span></div>
+    <div style="text-align:center"><span class="member-badge">Corvexsa Premium</span></div>
     <div class="glass-title" style="text-align:center">Talk with your advisor</div>
-    <div class="glass-sub" style="text-align:center">Voice conversations are part of Corvexsa Premium. Resume to speak with your advisor hands-free — it remembers everything.</div>
-    <button class="flow-btn" style="margin-top:22px" onclick="App.closeGlass(); App.showPaywall();">Resume Premium</button>
+    <div class="glass-sub" style="text-align:center">Continue your subscription to speak with your advisor hands-free — it remembers everything.</div>
+    <button class="flow-btn" style="margin-top:22px" onclick="App.closeGlass(); App.showPaywall();">View plans</button>
     <button class="flow-btn-ghost" onclick="App.closeGlass()">Not now</button>
   `);
 };
@@ -2072,9 +2207,9 @@ App.previewVoice = async function(id, btn) {
 const FB_KINDS = [
   { id: 'feature', label: 'Suggest a feature' },
   { id: 'bug', label: 'Report a bug' },
-  { id: 'experience', label: 'Share your experience' },
-  { id: 'rating', label: 'Rate AI recommendations' },
-  { id: 'vote', label: 'Vote on what’s next' },
+  { id: 'experience', label: 'Share an idea' },
+  { id: 'rating', label: 'Rate advisor quality' },
+  { id: 'vote', label: 'Vote on future features' },
 ];
 App._fb = { kind: 'feature', rating: 0 };
 
@@ -2295,6 +2430,19 @@ App.toggleTech = function(el) {
   if (tech) tech.classList.toggle('open');
   el.lastChild.textContent = el.classList.contains('open') ? ' Technical analysis' : ' Show technical analysis';
 };
+// A calm, non-blocking notice — never an error state. The advisor keeps
+// monitoring and alerting in the background; only new conversational turns
+// pause until next month or an upgrade.
+function limitCard() {
+  return `<div class="msg-card">
+    <div class="limit-card">
+      <div class="limit-card-title">You've used all of your Advisor Interactions for this month</div>
+      <div class="limit-card-body">Your advisor will continue monitoring your portfolio in the background. You'll still receive important notifications and portfolio alerts.</div>
+      <div class="limit-card-cta" onclick="App.showPaywall()">Upgrade to Premium for unlimited conversations →</div>
+    </div>
+  </div>`;
+}
+
 function cardAlert(a) {
   const crit = a.severity === 'critical';
   return `<div class="msg-card">
@@ -2404,6 +2552,11 @@ App.send = async function() {
     });
     const data = await res.json();
     hideTyping();
+    if (data.limitReached) {
+      $m(limitCard());
+      if (App.membership) { App.membership.interactions = data.interactions; App.renderSettings(); }
+      return;
+    }
     if (!res.ok || !data.reply) {
       // Backend error — show a clean message, keep the real cause in the console,
       // and DON'T record the failed turn in history (a retry should start clean).
@@ -2412,6 +2565,7 @@ App.send = async function() {
       return;
     }
     $m(typeof data.reply === 'object' ? bubbleAdvisor(data.reply) : bubbleA(data.reply));
+    if (App.membership && data.interactions) App.membership.interactions = data.interactions;
   } catch (err) {
     hideTyping();
     if (err && (err.message === 'Session expired' || err.message === 'membership_required')) return; // handled by apiFetch
@@ -2438,6 +2592,12 @@ App.runAnalysis = async function() {
     const res = await App.apiFetch('/api/analysis/run', { method:'POST' });
     const entry = await res.json();
     hideTyping();
+    if (entry.limitReached) {
+      $m(limitCard());
+      if (App.membership) { App.membership.interactions = entry.interactions; App.renderSettings(); }
+      return;
+    }
+    if (App.membership && entry.interactions) App.membership.interactions = entry.interactions;
     document.getElementById('messages').insertAdjacentHTML('beforeend',
       daySep('Just now') +
       bubbleA(entry.advisorMessage) +
@@ -2577,6 +2737,26 @@ App.openNotifs = function() {
 function fmtShares(n) { return String(+Number(n).toFixed(4)); }
 function isLiveBroker(bs) { return bs && (bs.type === 'trading212' || bs.type === 'ibkr'); }
 
+// "Advisor Interactions — 247 / 300 available this month" with a bar on
+// metered tiers; a calm "Unlimited" pill on Founding/Premium/Elite. Never
+// shown as a countdown-timer / scarcity device — just a plain usage fact.
+function interactionsMeterHtml(m) {
+  const it = m.interactions || {};
+  if (it.limit == null) {
+    return `<div class="interactions-unlimited">${CHECK_SVG}Unlimited Advisor Interactions</div>`;
+  }
+  const remaining = Math.max(0, it.limit - it.used);
+  const pct = Math.max(0, Math.min(100, Math.round((remaining / it.limit) * 100)));
+  return `
+    <div class="interactions-meter">
+      <div class="interactions-meter-row">
+        <span class="interactions-meter-lbl">Advisor Interactions</span>
+        <span class="interactions-meter-val">${remaining} / ${it.limit} available this month</span>
+      </div>
+      <div class="interactions-meter-bar"><div class="interactions-meter-fill ${pct <= 15 ? 'low' : ''}" style="width:${pct}%"></div></div>
+    </div>`;
+}
+
 function membershipCardHtml() {
   const m = App.membership;
   if (!m) return '';
@@ -2593,8 +2773,9 @@ function membershipCardHtml() {
         <div class="member-progress"><div class="member-progress-fill" style="width:${pct}%"></div></div>
         <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:12px">
           Every Premium feature is free during launch. Thank you for shaping Corvexsa.</div>
+        ${interactionsMeterHtml(m)}
         <div class="mini-btn-row" style="margin-top:12px">
-          <button class="mini-btn" onclick="App.showPaywall()">View Premium plan</button>
+          <button class="mini-btn" onclick="App.showPaywall()">View plans</button>
           <button class="mini-btn" onclick="App.openFeedback('feature')">Give feedback</button>
         </div>
       </div>
@@ -2604,16 +2785,22 @@ function membershipCardHtml() {
     return `
     <div class="s-section">
       <div class="s-section-title">Membership</div>
-      <div class="s-row">
-        <div class="s-row-left">
-          <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      <div class="port-card">
+        <div class="s-row" style="padding:0 0 4px">
+          <div class="s-row-left">
+            <div class="s-row-ico" style="background:var(--gold-dim);color:var(--gold)">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div><div class="s-row-lbl">Corvexsa ${m.entitlementLabel || 'Premium'}</div><div class="s-row-sub">Active subscription</div></div>
           </div>
-          <div><div class="s-row-lbl">Corvexsa Premium</div><div class="s-row-sub">Active · $14.99/month · everything included</div></div>
+          <span style="font-size:11px;font-weight:600;color:var(--green)">Active</span>
         </div>
-        <span style="font-size:11px;font-weight:600;color:var(--green)">Active</span>
+        ${interactionsMeterHtml(m)}
+        <div class="mini-btn-row" style="margin-top:12px">
+          <button class="mini-btn" onclick="App.showPaywall()">Change plan</button>
+          <button class="mini-btn" onclick="App.openBillingPortal(this)">Manage billing</button>
+        </div>
       </div>
-      <button class="mini-btn" style="margin-top:10px;width:100%" onclick="App.openBillingPortal(this)">Manage subscription</button>
     </div>`;
   }
   return `
@@ -2623,7 +2810,7 @@ function membershipCardHtml() {
         <div style="font-size:14px;font-weight:600;color:var(--text)">Membership paused</div>
         <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:6px">
           Monitoring, analysis and conversations are paused. Your timeline and Advisor Memory are preserved — resume anytime.</div>
-        <button class="mini-btn" style="margin-top:12px;width:100%" onclick="App.showPaywall()">Resume Premium — $14.99/month</button>
+        <button class="mini-btn" style="margin-top:12px;width:100%" onclick="App.showPaywall()">View plans</button>
       </div>
     </div>`;
 }
@@ -2636,9 +2823,9 @@ function feedbackSectionHtml() {
       ${[
         { k: 'bug', l: 'Report a bug', d: 'Something broken or off' },
         { k: 'feature', l: 'Suggest a feature', d: 'What should Corvexsa do next' },
-        { k: 'vote', l: 'Vote on upcoming features', d: 'Help us prioritize the roadmap' },
-        { k: 'experience', l: 'Share your experience', d: 'What works, what could be better' },
-        { k: 'rating', l: 'Rate AI recommendations', d: 'How good is the advice' },
+        { k: 'vote', l: 'Vote on future features', d: 'Help us prioritize the roadmap' },
+        { k: 'experience', l: 'Share an idea', d: 'What works, what could be better' },
+        { k: 'rating', l: 'Rate advisor quality', d: 'How good is the advice' },
       ].map(r => `
       <div class="s-row clickable" onclick="App.openFeedback('${r.k}')">
         <div class="s-row-left">

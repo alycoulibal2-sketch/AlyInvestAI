@@ -4,11 +4,27 @@ import * as claude from './_lib/claude.mjs';
 import * as chatStore from './_lib/chatStore.mjs';
 import { withAuth } from './_lib/auth.mjs';
 import * as membership from './_lib/membership.mjs';
+import * as interactions from './_lib/interactions.mjs';
+
+// The exact, calm copy for a spent-out Essential account. Never an error,
+// never a block — chat (and monitoring, notifications, everything else)
+// stays fully usable; the advisor simply can't take a new conversational
+// turn until next month or an upgrade.
+const LIMIT_REACHED_MESSAGE = "You've used all of your Advisor Interactions for this month.\n\nYour advisor will continue monitoring your portfolio in the background.\n\nYou'll still receive important notifications and portfolio alerts.\n\nUpgrade to Premium for unlimited conversations with your advisor.";
 
 export default withAuth(async (req, context, user) => {
   try {
+    const mem = await membership.ensure(user.id);
     if (!(await membership.isActive(user.id))) {
-      return Response.json({ error: 'Your Founding Member access has ended. Resume Premium to continue — your advisor remembers everything.', code: 'membership_required' }, { status: 402 });
+      return Response.json({ error: 'Your Founding Member access has ended. Resume your subscription to continue — your advisor remembers everything.', code: 'membership_required' }, { status: 402 });
+    }
+
+    const ent = membership.entitlements(mem);
+    const quota = await interactions.checkAndConsume(user.id, ent.interactionsPerMonth);
+    if (!quota.allowed) {
+      // Not an error response — a normal 200 the frontend renders as a calm
+      // advisor message instead of calling Claude at all.
+      return Response.json({ limitReached: true, message: LIMIT_REACHED_MESSAGE, interactions: { used: quota.used, limit: quota.limit } });
     }
 
     const { message } = await req.json();
@@ -35,7 +51,7 @@ export default withAuth(async (req, context, user) => {
       { role: 'advisor', text: reply.shortAnswer + '\n\n' + reply.explanation, data: reply },
     ]);
 
-    return Response.json({ reply });
+    return Response.json({ reply, interactions: { used: quota.used, limit: quota.limit } });
   } catch (err) {
     console.error('[chat]', err.message);
     return Response.json({ error: err.message }, { status: 500 });

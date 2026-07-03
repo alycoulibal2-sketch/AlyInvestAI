@@ -4,6 +4,15 @@ import * as market from './market.mjs';
 import * as claude from './claude.mjs';
 import * as push from './push.mjs';
 import * as notifications from './notifications.mjs';
+import * as membership from './membership.mjs';
+
+// Premium/Elite (and Founding) get 'high' Web Push urgency — a real protocol
+// header, not cosmetic — so their alerts are more likely to wake the device
+// immediately rather than wait for a batched delivery window.
+async function pushUrgency(userId) {
+  const ent = membership.entitlements(await membership.ensure(userId));
+  return ent && ent.priorityPush ? 'high' : 'normal';
+}
 
 // strong consistency: reads reflect writes immediately (default is eventual,
 // which made a just-run analysis vanish on the next read-after-write)
@@ -76,7 +85,7 @@ export async function runDailyAnalysis(userId, { manual = false, authUser } = {}
   if (oppCount) pushLines.push(`${oppCount} opportunit${oppCount > 1 ? 'ies' : 'y'}`);
   const summary = pushLines.length ? pushLines.join(' · ') : 'Portfolio reviewed — no changes needed';
 
-  await push.sendToUser(userId, { title: 'Your Advisor · Daily Review', body: summary, url: '/#advisor', tag: 'daily-analysis' });
+  await push.sendToUser(userId, { title: 'Your Advisor · Daily Review', body: summary, url: '/#advisor', tag: 'daily-analysis' }, { urgency: await pushUrgency(userId) });
 
   return entry;
 }
@@ -91,7 +100,7 @@ export async function runRiskCheck(userId, { manual = false, authUser } = {}) {
       await notifications.add(userId, { tag: 'alert', title: a.title, body: a.body });
     }
     const first = result.alerts[0];
-    await push.sendToUser(userId, { title: `Risk Alert · ${first.title}`, body: first.body, url: '/#advisor', tag: 'risk-alert' });
+    await push.sendToUser(userId, { title: `Risk Alert · ${first.title}`, body: first.body, url: '/#advisor', tag: 'risk-alert' }, { urgency: await pushUrgency(userId) });
   }
 
   return { ranAt: new Date().toISOString(), manual, ...result };

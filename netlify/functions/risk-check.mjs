@@ -5,7 +5,7 @@ import * as membership from './_lib/membership.mjs';
 export default withAuth(async (req, context, user) => {
   try {
     if (!(await membership.isActive(user.id))) {
-      return Response.json({ error: 'Your Founding Member access has ended. Resume Premium to continue — your advisor remembers everything.', code: 'membership_required' }, { status: 402 });
+      return Response.json({ error: 'Your Founding Member access has ended. Resume your subscription to continue — your advisor remembers everything.', code: 'membership_required' }, { status: 402 });
     }
 
     const entry = await analysisCore.runRiskCheck(user.id, { manual: true, authUser: user });

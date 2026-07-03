@@ -9,6 +9,7 @@
 //               resubscribing restores everything instantly.
 
 import { getStore } from '@netlify/blobs';
+import { TIERS, FOUNDING_ENTITLEMENTS } from './tiers.mjs';
 
 const DAY = 24 * 3600 * 1000;
 export const FOUNDING_DAYS = 60;
@@ -47,11 +48,39 @@ export function toPublic(m) {
     : 0;
   return {
     status: m.status,
+    tier: m.status === 'subscribed' ? (m.tier || 'premium') : null, // legacy fallback, see resolveTier()
     foundingEndsAt: m.foundingEndsAt,
     daysLeft,
     welcomeSeen: !!m.welcomeSeenAt,
     subscribedAt: m.subscribedAt,
   };
+}
+
+// Accounts subscribed before the 3-tier system existed have no `tier` field
+// (they paid for the old single $14.99/mo "everything included" plan) —
+// treat them as Premium, which had equivalent unlimited access.
+function resolveTier(m) {
+  return TIERS[m.tier] || TIERS.premium;
+}
+
+// Resolves what an account is actually entitled to right now. Returns null
+// for lapsed (no chat/voice access at all — the existing isActive() gate),
+// otherwise an entitlements object with interactionsPerMonth/voiceUnlimited/
+// priorityPush that every metered endpoint reads from, so "founding" and
+// "subscribed" never need special-casing beyond this one function.
+export function entitlements(m) {
+  if (m.status === 'founding') return FOUNDING_ENTITLEMENTS;
+  if (m.status === 'subscribed') {
+    const tier = resolveTier(m);
+    return {
+      tier: tier.id,
+      label: tier.name,
+      interactionsPerMonth: tier.interactionsPerMonth,
+      voiceUnlimited: tier.voiceUnlimited,
+      priorityPush: tier.priorityPush,
+    };
+  }
+  return null;
 }
 
 export async function markWelcomeSeen(userId) {
@@ -67,7 +96,20 @@ export async function subscribe(userId, stripeInfo) {
   if (stripeInfo) {
     m.stripeCustomerId = stripeInfo.customerId || m.stripeCustomerId;
     m.stripeSubscriptionId = stripeInfo.subscriptionId || m.stripeSubscriptionId;
+    if (stripeInfo.tier) m.tier = stripeInfo.tier;
   }
+  await save(userId, m);
+  return m;
+}
+
+// A plan change on an already-active subscription (upgrade/downgrade), driven
+// by Stripe's customer.subscription.updated webhook — the tier of record is
+// always whatever Stripe says the subscription's current price is, never a
+// value trusted from the client.
+export async function setTier(userId, tier) {
+  const m = await ensure(userId);
+  if (m.status !== 'subscribed' || m.tier === tier) return m;
+  m.tier = tier;
   await save(userId, m);
   return m;
 }

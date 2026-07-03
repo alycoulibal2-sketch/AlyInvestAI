@@ -7,6 +7,7 @@ import { stripe } from './_lib/stripe.mjs';
 import * as membership from './_lib/membership.mjs';
 import * as notifications from './_lib/notifications.mjs';
 import * as credits from './_lib/credits.mjs';
+import { tierByLookupKey, TIERS } from './_lib/tiers.mjs';
 
 export default async (req) => {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -28,15 +29,18 @@ export default async (req) => {
         const session = event.data.object;
         const userId = session.client_reference_id || session.metadata?.userId;
 
-        // Subscription checkout → activate Premium (unchanged).
+        // Subscription checkout → activate the chosen tier.
         if (userId && session.mode === 'subscription') {
+          const tierId = session.metadata?.tier || null;
           await membership.subscribe(userId, {
             customerId: session.customer,
             subscriptionId: session.subscription,
+            tier: tierId,
           });
+          const tierName = (TIERS[tierId] || TIERS.premium).name;
           await notifications.add(userId, {
             tag: 'update',
-            title: 'Welcome to Corvexsa Premium',
+            title: `Welcome to Corvexsa ${tierName}`,
             body: 'Your subscription is active. Your advisor is watching your portfolio every day — thank you for being part of Corvexsa.',
           });
         }
@@ -61,6 +65,29 @@ export default async (req) => {
         }
         break;
       }
+      // Plan change (upgrade/downgrade), whether initiated through our own
+      // billing-checkout endpoint or Stripe's own Customer Portal. The tier
+      // of record is always derived from the subscription's CURRENT price's
+      // lookup_key — never trusted from metadata alone, since metadata can
+      // go stale if a plan is ever changed by some other path.
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
+        const userId = sub.metadata?.userId;
+        const priceLookupKey = sub.items?.data?.[0]?.price?.lookup_key;
+        const tier = priceLookupKey ? tierByLookupKey(priceLookupKey) : null;
+        if (userId && tier && sub.status === 'active') {
+          const before = (await membership.ensure(userId)).tier;
+          await membership.setTier(userId, tier.id);
+          if (before && before !== tier.id) {
+            await notifications.add(userId, {
+              tag: 'update',
+              title: `You're now on Corvexsa ${tier.name}`,
+              body: 'Your plan has changed and takes effect immediately. Thank you for being part of Corvexsa.',
+            });
+          }
+        }
+        break;
+      }
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
         const userId = sub.metadata?.userId;
@@ -68,7 +95,7 @@ export default async (req) => {
           await membership.unsubscribe(userId);
           await notifications.add(userId, {
             tag: 'update',
-            title: 'Your Premium subscription has ended',
+            title: 'Your Corvexsa subscription has ended',
             body: 'Monitoring and analysis are paused. Your timeline and Advisor Memory are preserved — resume anytime and your advisor will remember everything.',
           });
         }
