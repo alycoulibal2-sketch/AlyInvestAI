@@ -111,7 +111,7 @@ const ANALYSIS_TOOL = {
       },
       opportunities: {
         type: 'array',
-        description: 'New tickers (not currently held) worth suggesting a buy on, if any look attractive today. Can be empty.',
+        description: 'New tickers (not currently held) worth suggesting a buy on, if any look attractive today. Can be empty. These also power the Opportunity Feed, so give each a real risk note.',
         items: {
           type: 'object',
           properties: {
@@ -119,10 +119,11 @@ const ANALYSIS_TOOL = {
             name: { type: 'string' },
             quantity: { type: 'integer' },
             estPrice: { type: 'number' },
-            confidence: { type: 'integer', minimum: 0, maximum: 100 },
+            confidence: { type: 'integer', minimum: 0, maximum: 100, description: 'Doubles as the Opportunity Score (0-100).' },
             rationale: { type: 'string' },
+            risk: { type: 'string', description: 'One short sentence on the main risk of this opportunity.' },
           },
-          required: ['ticker', 'quantity', 'confidence', 'rationale'],
+          required: ['ticker', 'quantity', 'confidence', 'rationale', 'risk'],
         },
       },
       alerts: {
@@ -216,7 +217,10 @@ function extractText(resp) {
   return text;
 }
 
-export async function runDailyAnalysis(portfolioView, marketSnapshot, recentNotifications) {
+export async function runDailyAnalysis(portfolioView, marketSnapshot, recentNotifications, favorites) {
+  const favLine = (favorites && favorites.length)
+    ? `\n\nFAVORITE COMPANIES the client follows but does NOT own (monitor these too — you may surface one as an opportunity if it looks attractive, and mention any that had material news): ${JSON.stringify(favorites)}`
+    : '';
   const userMsg = `Here is the client's current state. Analyze it and call record_analysis.
 
 CLIENT PROFILE:
@@ -236,7 +240,7 @@ VIX-style volatility index: ${marketSnapshot.vix}
 RECENT NOTIFICATIONS ALREADY SENT (avoid repeating the same point verbatim):
 ${JSON.stringify((recentNotifications || []).slice(0, 6).map(n => n.title))}
 
-THE CLIENT'S STATED GOALS (assess each one in goalAssessments): ${JSON.stringify(portfolioView.user?.goals || ['Long-term wealth building'])}`;
+THE CLIENT'S STATED GOALS (assess each one in goalAssessments): ${JSON.stringify(portfolioView.user?.goals || ['Long-term wealth building'])}${favLine}`;
 
   const resp = await callClaude({
     system: BASE_VOICE + '\n\n' + styleFor(portfolioView.user?.experience) +
@@ -274,6 +278,50 @@ VIX: ${marketSnapshot.vix}`;
     max_tokens: 4000,
   });
   return extractToolInput(resp, 'record_risk_check');
+}
+
+// A Portfolio Snapshot — a beautiful "moment" the client can relive years
+// later. The computed numbers (value, health, allocation, top holdings) are
+// filled in by the caller from real data; Claude supplies only the narrative
+// colour: mood, sentiment, the standout opportunity/risk, achievements.
+const SNAPSHOT_TOOL = {
+  name: 'record_snapshot',
+  description: 'Write the narrative layer of a portfolio snapshot — the human colour that makes it worth reliving later.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      advisorSummary: { type: 'string', description: "2-4 sentences capturing where the portfolio stands right now and how the client is doing, in your warm advisor voice — as if writing a caption for this moment in their journey." },
+      advisorMood: { type: 'string', enum: ['Optimistic', 'Confident', 'Steady', 'Watchful', 'Cautious', 'Concerned'], description: "Your honest overall mood about the portfolio at this moment." },
+      marketSentiment: { type: 'string', enum: ['Bullish', 'Constructive', 'Neutral', 'Uneasy', 'Bearish'], description: 'The broad market mood given the snapshot data.' },
+      biggestOpportunity: { type: 'string', description: 'The single most interesting opportunity right now, one sentence.' },
+      biggestRisk: { type: 'string', description: 'The single biggest risk to watch right now, one sentence.' },
+      favoriteCompany: { type: 'string', description: "The one holding you feel best about right now (ticker + a few words why)." },
+      achievements: { type: 'array', items: { type: 'string' }, description: '0-3 milestones or things worth celebrating about this portfolio at this point (e.g. "First time above $25k", "Diversification improved for the third month running"). Empty if nothing stands out.' },
+    },
+    required: ['advisorSummary', 'advisorMood', 'marketSentiment', 'biggestOpportunity', 'biggestRisk', 'favoriteCompany', 'achievements'],
+  },
+};
+
+export async function generateSnapshotNarrative(portfolioView, latestAnalysis, marketSnapshot, context) {
+  const userMsg = `Write the narrative for a portfolio snapshot (${context?.reason || 'monthly'} capture, ${context?.date || 'today'}). Call record_snapshot.
+
+PORTFOLIO VALUE: $${portfolioView.total} · CASH: $${portfolioView.cash}
+HOLDINGS: ${JSON.stringify(portfolioView.holdings.map(h => ({ ticker: h.ticker, weightPct: h.weightPct, gainPct: h.gainPct })))}
+SECTOR WEIGHTS: ${JSON.stringify(portfolioView.sectorWeights)}
+${latestAnalysis ? `LATEST HEALTH: ${latestAnalysis.portfolioHealthScore}/100 · RISK: ${latestAnalysis.overallRisk}
+HEALTH BREAKDOWN: ${JSON.stringify(latestAnalysis.healthBreakdown || {})}
+GOALS: ${JSON.stringify((latestAnalysis.goalAssessments || []).map(g => ({ goal: g.goal, progress: g.progressPct })))}` : 'No prior analysis yet.'}
+MARKET: VIX ${marketSnapshot.vix} · ${JSON.stringify((marketSnapshot.tickers || []).slice(0, 6).map(t => ({ t: t.ticker, chg: t.changePct })))}`;
+
+  const resp = await callClaude({
+    system: BASE_VOICE + '\n\n' + styleFor(portfolioView.user?.experience) +
+      '\nWrite the summary and every field at this communication level. Be warm and specific to THIS portfolio — this is a keepsake the client may reread in five years.',
+    messages: [{ role: 'user', content: userMsg }],
+    tools: [SNAPSHOT_TOOL],
+    tool_choice: toolChoice('record_snapshot'),
+    max_tokens: 4000,
+  });
+  return extractToolInput(resp, 'record_snapshot');
 }
 
 // Structured reply: Short Answer → Simple Explanation → Recommended Action →

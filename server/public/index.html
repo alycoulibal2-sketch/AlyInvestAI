@@ -970,6 +970,94 @@ input,textarea{font-family:inherit}
 .goal-improve strong{color:var(--gold);font-weight:600}
 .hub-loading{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
 
+/* opportunity feed */
+.opp-card{
+  background:linear-gradient(168deg,rgba(30,33,46,.5),rgba(13,15,21,.6));
+  border:1px solid var(--border2);border-radius:16px;padding:16px 18px;margin-bottom:12px;
+  cursor:pointer;transition:border-color .2s
+}
+.opp-card:hover{border-color:rgba(199,168,103,.35)}
+.opp-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.opp-ticker{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.opp-name{font-size:12px;color:var(--muted);margin-top:1px}
+.opp-score{text-align:center;flex-shrink:0}
+.opp-score-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.opp-score-lbl{font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--subtle);margin-top:2px}
+.opp-reason{font-size:13px;color:var(--muted);line-height:1.6;margin-top:11px}
+.opp-more{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.opp-card.open .opp-more{max-height:300px}
+.opp-risk{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.opp-risk-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);margin-right:6px}
+.opp-sizing{font-size:12px;color:var(--subtle);margin-top:8px}
+.opp-ask{font-size:12.5px;font-weight:600;color:var(--gold);margin-top:12px;cursor:pointer}
+
+/* favorites */
+.fav-add-row{display:flex;gap:8px;margin-bottom:16px}
+.fav-add-select{
+  flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;
+  padding:10px 12px;font-size:13px;color:var(--text);outline:none;color-scheme:dark
+}
+.fav-card{
+  background:linear-gradient(168deg,rgba(30,33,46,.5),rgba(13,15,21,.6));
+  border:1px solid var(--border2);border-radius:16px;padding:16px 18px;margin-bottom:12px
+}
+.fav-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.fav-ticker{font-size:16px;font-weight:700;color:var(--text)}
+.fav-name{font-size:12px;color:var(--muted);margin-left:8px}
+.fav-price{text-align:right;flex-shrink:0}
+.fav-px{font-size:14px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.fav-chg{font-size:12px;margin-left:6px;font-variant-numeric:tabular-nums}
+.fav-news{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:10px;font-style:italic}
+.fav-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.fav-tag{font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface3);border-radius:6px;padding:3px 8px}
+.fav-actions{display:flex;align-items:center;justify-content:space-between;margin-top:13px}
+.fav-link{font-size:12.5px;font-weight:600;color:var(--gold);cursor:pointer}
+.fav-remove{font-size:12px;color:var(--subtle);cursor:pointer;transition:color .15s}
+.fav-remove:hover{color:var(--red)}
+
+/* snapshots gallery */
+.snap-gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:400px){.snap-gallery{grid-template-columns:1fr}}
+.snap-tile{
+  background:linear-gradient(168deg,rgba(30,33,46,.55),rgba(13,15,21,.68));
+  border:1px solid var(--border2);border-radius:16px;padding:15px;cursor:pointer;
+  transition:transform .2s cubic-bezier(.16,1,.3,1),border-color .2s
+}
+.snap-tile:hover{transform:translateY(-3px);border-color:rgba(199,168,103,.4)}
+.snap-tile-top{display:flex;align-items:center;justify-content:space-between}
+.snap-mood{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold)}
+.snap-date{font-size:11px;color:var(--subtle)}
+.snap-value{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-1px;font-variant-numeric:tabular-nums;margin-top:14px}
+.snap-metrics{display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.snap-metrics b{font-weight:700}
+/* snapshot detail */
+.snap-hero{text-align:center;padding:10px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.snap-hero-date{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.snap-hero-value{font-size:42px;font-weight:700;color:var(--text);letter-spacing:-1.5px;font-variant-numeric:tabular-nums;margin-top:8px}
+.snap-hero-tags{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.snap-hero-tag{font-size:11px;font-weight:600;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(199,168,103,.25);padding:5px 12px;border-radius:999px}
+.snap-summary{font-size:14.5px;color:var(--text);line-height:1.7;margin-bottom:22px}
+.snap-section{margin-bottom:22px}
+.snap-section-t{font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.snap-achieve{font-size:13px;color:var(--gold);line-height:1.6;margin-bottom:5px}
+.snap-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.snap-box{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:13px;padding:14px}
+.snap-box-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--subtle);margin-bottom:6px}
+.snap-box-val{font-size:12.5px;color:var(--text);line-height:1.5}
+.snap-holding{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.snap-holding:last-child{border-bottom:none}
+.snap-holding-t{font-weight:700;color:var(--text);flex:1}
+.snap-holding-w{color:var(--muted);font-variant-numeric:tabular-nums}
+.snap-holding-g{font-variant-numeric:tabular-nums;min-width:52px;text-align:right}
+.snap-alloc{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-bottom:8px}
+.snap-alloc>span:first-child{width:88px;flex-shrink:0}
+.snap-alloc-bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.snap-alloc-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#9a7830,var(--gold))}
+.snap-alloc-w{width:38px;text-align:right;font-variant-numeric:tabular-nums;flex-shrink:0}
+.snap-goal{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
+.snap-goal:last-child{border-bottom:none}
+.snap-goal-p{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+
 /* paused (lapsed) banner — calm, not alarming */
 .paused-banner{
   display:none;align-items:center;gap:12px;
@@ -3243,6 +3331,15 @@ function scoreColor(n) {
   return 'var(--red)';
 }
 
+// Companies in the advisor's coverage universe that can be followed as
+// favorites (mirrors the market simulator's UNIVERSE; the server validates).
+App.FAV_UNIVERSE = [
+  { ticker: 'MSFT', name: 'Microsoft' }, { ticker: 'NVDA', name: 'NVIDIA' }, { ticker: 'AAPL', name: 'Apple' },
+  { ticker: 'VOO', name: 'Vanguard S&P 500 ETF' }, { ticker: 'V', name: 'Visa' }, { ticker: 'JNJ', name: 'Johnson & Johnson' },
+  { ticker: 'GOOGL', name: 'Alphabet' }, { ticker: 'AMZN', name: 'Amazon' }, { ticker: 'SCHD', name: 'Schwab US Dividend ETF' },
+  { ticker: 'XOM', name: 'Exxon Mobil' }, { ticker: 'UNH', name: 'UnitedHealth Group' },
+];
+
 App.openHub = function(view) {
   document.getElementById('hub-panel').classList.add('open');
   document.getElementById('backdrop').classList.add('show');
@@ -3271,14 +3368,32 @@ App.renderHubHome = function() {
         <div class="hub-card-body"><div class="hub-card-title">Goals</div><div class="hub-card-sub">Progress and probability toward what matters</div></div>
         <div class="hub-card-meta">${goalsN || ''}</div>
       </div>
+      <div class="hub-card" onclick="App.hubShow('snapshots')">
+        <div class="hub-card-ico"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1.5-2h5L16 6"/></svg></div>
+        <div class="hub-card-body"><div class="hub-card-title">Portfolio Snapshots</div><div class="hub-card-sub">Relive your journey, one moment at a time</div></div>
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="hub-card" onclick="App.hubShow('opportunities')">
+        <div class="hub-card-ico"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
+        <div class="hub-card-body"><div class="hub-card-title">Opportunity Feed</div><div class="hub-card-sub">Ideas your advisor finds worth a look</div></div>
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="hub-card" onclick="App.hubShow('favorites')">
+        <div class="hub-card-ico"><svg viewBox="0 0 24 24"><path d="M12 21C12 21 4 14.5 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5.5-8 12-8 12z"/></svg></div>
+        <div class="hub-card-body"><div class="hub-card-title">Favorite Companies</div><div class="hub-card-sub">Follow companies you don't own yet</div></div>
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
     </div>
-    <div class="hub-soon">More arriving soon — Earnings Calendar, Opportunity Feed,<br>Portfolio Replay, Snapshots, and your Advisor Memory Timeline.</div>`;
+    <div class="hub-soon">More arriving soon — Earnings Calendar, Company Deep Dive,<br>Portfolio Replay, and your Advisor Memory Timeline.</div>`;
 };
 
 App.hubShow = function(view) {
   if (view === 'health') return App.hubShowHealth();
   if (view === 'journal') return App.hubShowJournal();
   if (view === 'goals') return App.hubShowGoals();
+  if (view === 'snapshots') return App.hubShowSnapshots();
+  if (view === 'opportunities') return App.hubShowOpportunities();
+  if (view === 'favorites') return App.hubShowFavorites();
   return App.renderHubHome();
 };
 
@@ -3415,6 +3530,179 @@ App.hubShowGoals = function() {
         </div>`).join('')}
     </div>`;
 };
+
+// ── Opportunity Feed ──
+App.hubShowOpportunities = async function() {
+  document.getElementById('hub-title').textContent = 'Opportunity Feed';
+  const body = document.getElementById('hub-body');
+  body.innerHTML = `${hubBack()}<div class="hub-loading hub-anim">Loading opportunities…</div>`;
+  let opps = [];
+  try { opps = (await App.apiFetch('/api/opportunities').then(r => r.json())).opportunities || []; } catch (e) {}
+  if (!opps.length) {
+    body.innerHTML = `${hubBack()}<div class="journal-empty hub-anim">No opportunities right now.<br>Your advisor surfaces new ideas here when it finds something genuinely worth a look — quality over quantity.</div>`;
+    return;
+  }
+  body.innerHTML = `${hubBack()}<div class="hub-anim">${opps.map(o => `
+    <div class="opp-card" onclick="App.hubOppExpand(this)">
+      <div class="opp-hd">
+        <div><div class="opp-ticker">${esc(o.ticker)}</div><div class="opp-name">${esc(o.name)}</div></div>
+        <div class="opp-score"><div class="opp-score-val" style="color:${scoreColor(o.score)}">${o.score}</div><div class="opp-score-lbl">Score</div></div>
+      </div>
+      <div class="opp-reason">${esc(o.reason)}</div>
+      <div class="opp-more">
+        ${o.risk ? `<div class="opp-risk"><span class="opp-risk-lbl">Risk</span> ${esc(o.risk)}</div>` : ''}
+        ${o.quantity ? `<div class="opp-sizing">Advisor sizing: ~${o.quantity} share${o.quantity > 1 ? 's' : ''}${o.estPrice ? ` · ~$${o.estPrice}` : ''}</div>` : ''}
+        <div class="opp-ask" onclick="event.stopPropagation(); App.askAboutTicker('${o.ticker}')">Ask your advisor about ${esc(o.ticker)} →</div>
+      </div>
+    </div>`).join('')}</div>`;
+};
+App.hubOppExpand = function(el) { el.classList.toggle('open'); };
+App.askAboutTicker = function(ticker) {
+  App.closeAll();
+  const inp = document.getElementById('chat-input');
+  if (inp) { inp.value = `What's the opportunity in ${ticker}?`; App.send(); }
+};
+
+// ── Favorite Companies ──
+App.hubShowFavorites = async function() {
+  document.getElementById('hub-title').textContent = 'Favorite Companies';
+  const body = document.getElementById('hub-body');
+  body.innerHTML = `${hubBack()}<div class="hub-loading hub-anim">Loading…</div>`;
+  await App.renderFavorites();
+};
+App.renderFavorites = async function() {
+  let favs = [];
+  try { favs = (await App.apiFetch('/api/favorites').then(r => r.json())).favorites || []; } catch (e) {}
+  App._favTickers = favs.map(f => f.ticker);
+  const universe = App.FAV_UNIVERSE || [];
+  const addable = universe.filter(u => !App._favTickers.includes(u.ticker));
+  const body = document.getElementById('hub-body');
+  body.innerHTML = `${hubBack()}
+    <div class="hub-anim">
+      ${addable.length ? `<div class="fav-add-row">
+        <select class="fav-add-select" id="fav-add-select">
+          <option value="">Follow a company…</option>
+          ${addable.map(u => `<option value="${u.ticker}">${u.ticker} · ${esc(u.name)}</option>`).join('')}
+        </select>
+        <button class="mini-btn" onclick="App.addFavorite()">Follow</button>
+      </div>` : ''}
+      ${favs.length ? favs.map(f => `
+        <div class="fav-card">
+          <div class="fav-hd">
+            <div><span class="fav-ticker">${esc(f.ticker)}</span><span class="fav-name">${esc(f.name)}</span></div>
+            <div class="fav-price">
+              ${f.price != null ? `<span class="fav-px">$${f.price}</span>` : ''}
+              ${f.changePct != null ? `<span class="fav-chg" style="color:${f.changePct >= 0 ? 'var(--green)' : 'var(--red)'}">${f.changePct >= 0 ? '+' : ''}${f.changePct}%</span>` : ''}
+            </div>
+          </div>
+          ${f.headline ? `<div class="fav-news">${esc(f.headline)}</div>` : ''}
+          <div class="fav-meta">
+            ${f.sector ? `<span class="fav-tag">${esc(f.sector)}</span>` : ''}
+            ${f.daysToEarnings != null ? `<span class="fav-tag">Earnings in ~${f.daysToEarnings}d</span>` : ''}
+            ${f.recommendation ? `<span class="fav-tag" style="color:var(--gold)">Advisor: ${esc(f.recommendation.action)}</span>` : ''}
+          </div>
+          <div class="fav-actions">
+            <span class="fav-link" onclick="App.askAboutTicker('${f.ticker}')">Ask your advisor →</span>
+            <span class="fav-remove" onclick="App.removeFavorite('${f.ticker}')">Unfollow</span>
+          </div>
+        </div>`).join('') : '<div class="journal-empty">You\'re not following any companies yet.<br>Follow one above and your advisor will monitor it alongside your holdings.</div>'}
+    </div>`;
+};
+App.addFavorite = async function() {
+  const sel = document.getElementById('fav-add-select');
+  const ticker = sel && sel.value;
+  if (!ticker) return;
+  try { await App.apiFetch('/api/favorites', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ticker }) }); } catch (e) {}
+  await App.renderFavorites();
+};
+App.removeFavorite = async function(ticker) {
+  try { await App.apiFetch('/api/favorites', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ticker }) }); } catch (e) {}
+  await App.renderFavorites();
+};
+
+// ── Portfolio Snapshots ──
+App.hubShowSnapshots = async function() {
+  document.getElementById('hub-title').textContent = 'Portfolio Snapshots';
+  const body = document.getElementById('hub-body');
+  body.innerHTML = `${hubBack()}<div class="hub-loading hub-anim">Loading your snapshots…</div>`;
+  let snaps = [];
+  try { snaps = (await App.apiFetch('/api/snapshots').then(r => r.json())).snapshots || []; } catch (e) {}
+  App._snapshots = snaps;
+  const captureBtn = `<button class="mini-btn" onclick="App.captureSnapshot(this)">Capture this moment</button>`;
+  if (!snaps.length) {
+    body.innerHTML = `${hubBack()}
+      <div class="hub-anim">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">${captureBtn}</div>
+        <div class="journal-empty">No snapshots yet.<br>Your first one is captured automatically at the start of next month — or capture this moment now to begin your album.</div>
+      </div>`;
+    return;
+  }
+  body.innerHTML = `${hubBack()}
+    <div class="hub-anim">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <span style="font-size:12.5px;color:var(--muted)">${snaps.length} moment${snaps.length > 1 ? 's' : ''} in your journey</span>
+        ${captureBtn}
+      </div>
+      <div class="snap-gallery">
+        ${snaps.map(s => `
+          <div class="snap-tile" onclick="App.openSnapshot(${s.id})">
+            <div class="snap-tile-top">
+              <span class="snap-mood">${esc(s.advisorMood || '')}</span>
+              <span class="snap-date">${snapDate(s.at)}</span>
+            </div>
+            <div class="snap-value">${fmtMoney(s.portfolioValue)}</div>
+            <div class="snap-metrics">
+              <span>Health <b style="color:${scoreColor(s.health)}">${s.health ?? '—'}</b></span>
+              <span>${esc(s.reason === 'monthly' ? 'Monthly' : 'Saved')}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+};
+App.captureSnapshot = async function(btn) {
+  if (btn) { btn.disabled = true; btn.style.opacity = '.6'; btn.textContent = 'Capturing…'; }
+  try {
+    const res = await App.apiFetch('/api/snapshots/capture', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.snapshot) { await App.hubShowSnapshots(); App.openSnapshot(data.snapshot.id); return; }
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = data.code === 'rate_limited' ? 'Already captured today' : 'Capture this moment'; }
+  } catch (e) { if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Capture this moment'; } }
+};
+App.openSnapshot = function(id) {
+  const s = (App._snapshots || []).find(x => x.id === id);
+  if (!s) return;
+  const alloc = Object.entries(s.sectorWeights || {}).sort((a, b) => b[1] - a[1]);
+  const body = document.getElementById('hub-body');
+  body.innerHTML = `
+    <div class="hub-back" onclick="App.hubShowSnapshots()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Snapshots</div>
+    <div class="hub-anim snap-detail">
+      <div class="snap-hero">
+        <div class="snap-hero-date">${snapDateLong(s.at)}</div>
+        <div class="snap-hero-value">${fmtMoney(s.portfolioValue)}</div>
+        <div class="snap-hero-tags">
+          <span class="snap-hero-tag">${esc(s.advisorMood || '')}</span>
+          <span class="snap-hero-tag">Market: ${esc(s.marketSentiment || '')}</span>
+          ${s.health != null ? `<span class="snap-hero-tag">Health ${s.health}</span>` : ''}
+        </div>
+      </div>
+      <div class="snap-summary">${esc(s.advisorSummary || '')}</div>
+      ${(s.achievements && s.achievements.length) ? `<div class="snap-section"><div class="snap-section-t">Achievements</div>${s.achievements.map(x => `<div class="snap-achieve">✦ ${esc(x)}</div>`).join('')}</div>` : ''}
+      <div class="snap-2col">
+        <div class="snap-box"><div class="snap-box-lbl">Biggest opportunity</div><div class="snap-box-val">${esc(s.biggestOpportunity || '—')}</div></div>
+        <div class="snap-box"><div class="snap-box-lbl">Biggest risk</div><div class="snap-box-val">${esc(s.biggestRisk || '—')}</div></div>
+      </div>
+      <div class="snap-box" style="margin-top:10px"><div class="snap-box-lbl">Favorite holding</div><div class="snap-box-val">${esc(s.favoriteCompany || '—')}</div></div>
+      ${(s.topHoldings && s.topHoldings.length) ? `<div class="snap-section"><div class="snap-section-t">Top holdings</div>${s.topHoldings.map(h => `
+        <div class="snap-holding"><span class="snap-holding-t">${esc(h.ticker)}</span><span class="snap-holding-w">${h.weightPct}%</span><span class="snap-holding-g" style="color:${h.gainPct >= 0 ? 'var(--green)' : 'var(--red)'}">${h.gainPct >= 0 ? '+' : ''}${h.gainPct}%</span></div>`).join('')}</div>` : ''}
+      ${alloc.length ? `<div class="snap-section"><div class="snap-section-t">Allocation</div>${alloc.map(([sec, w]) => `
+        <div class="snap-alloc"><span>${esc(sec)}</span><div class="snap-alloc-bar"><div class="snap-alloc-fill" style="width:${Math.min(100, w)}%"></div></div><span class="snap-alloc-w">${w}%</span></div>`).join('')}</div>` : ''}
+      ${(s.goals && s.goals.length) ? `<div class="snap-section"><div class="snap-section-t">Goal progress</div>${s.goals.map(g => `
+        <div class="snap-goal"><span>${esc(g.goal)}</span><span class="snap-goal-p">${g.progressPct}%</span></div>`).join('')}</div>` : ''}
+    </div>`;
+};
+function fmtMoney(n) { return n == null ? '—' : '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+function snapDate(at) { const d = new Date(at); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+function snapDateLong(at) { const d = new Date(at); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); }
 
 App.renderSettings = function() {
   const p = App.portfolioView;

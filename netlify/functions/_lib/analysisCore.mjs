@@ -5,6 +5,8 @@ import * as claude from './claude.mjs';
 import * as push from './push.mjs';
 import * as notifications from './notifications.mjs';
 import * as membership from './membership.mjs';
+import * as favorites from './favorites.mjs';
+import * as snapshots from './snapshots.mjs';
 
 // Premium/Elite (and Founding) get 'high' Web Push urgency — a real protocol
 // header, not cosmetic — so their alerts are more likely to wake the device
@@ -46,8 +48,9 @@ export async function runDailyAnalysis(userId, { manual = false, authUser } = {}
   const marketSnapshot = market.getDailySnapshot();
   const portfolioView = await currentPortfolioView(userId, marketSnapshot, authUser);
   const recent = await notifications.list(userId);
+  const favs = await favorites.list(userId);
 
-  const result = await claude.runDailyAnalysis(portfolioView, marketSnapshot, recent);
+  const result = await claude.runDailyAnalysis(portfolioView, marketSnapshot, recent, favs);
 
   const entry = {
     id: Date.now(),
@@ -104,4 +107,49 @@ export async function runRiskCheck(userId, { manual = false, authUser } = {}) {
   }
 
   return { ranAt: new Date().toISOString(), manual, ...result };
+}
+
+// Captures a Portfolio Snapshot — the computed state (from real portfolio +
+// latest analysis) plus a fresh narrative from the advisor. `reason` is
+// 'monthly' (scheduled) or 'manual'. Returns the stored snapshot.
+export async function captureSnapshot(userId, { reason = 'manual', authUser } = {}) {
+  const marketSnapshot = market.getDailySnapshot();
+  const [portfolioView, latestAnalysis] = await Promise.all([
+    currentPortfolioView(userId, marketSnapshot, authUser),
+    getLatestAnalysis(userId),
+  ]);
+
+  const narrative = await claude.generateSnapshotNarrative(portfolioView, latestAnalysis, marketSnapshot, {
+    reason, date: new Date().toISOString().slice(0, 10),
+  });
+
+  // Allocation and top holdings, computed from the real portfolio.
+  const topHoldings = [...portfolioView.holdings]
+    .sort((a, b) => b.value - a.value).slice(0, 5)
+    .map(h => ({ ticker: h.ticker, weightPct: h.weightPct, value: h.value, gainPct: h.gainPct }));
+
+  const entry = await snapshots.add(userId, {
+    reason,
+    // Computed facts
+    portfolioValue: portfolioView.total,
+    cash: portfolioView.cash,
+    health: latestAnalysis?.portfolioHealthScore ?? null,
+    healthBreakdown: latestAnalysis?.healthBreakdown ?? null,
+    risk: latestAnalysis?.overallRisk ?? null,
+    diversification: latestAnalysis?.healthBreakdown?.diversification?.score ?? latestAnalysis?.diversificationScore ?? null,
+    goals: (latestAnalysis?.goalAssessments || []).map(g => ({ goal: g.goal, progressPct: g.progressPct, probabilityPct: g.probabilityPct })),
+    topHoldings,
+    sectorWeights: portfolioView.sectorWeights,
+    marketVix: marketSnapshot.vix,
+    // Advisor narrative
+    ...narrative,
+  });
+
+  await notifications.add(userId, {
+    tag: 'update',
+    title: reason === 'monthly' ? 'Your monthly Portfolio Snapshot is ready' : 'Portfolio Snapshot saved',
+    body: narrative.advisorSummary,
+  });
+
+  return entry;
 }
